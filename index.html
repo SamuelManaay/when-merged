@@ -419,6 +419,17 @@
 </head>
 
 <body>
+    <!-- Unsupported File Modal -->
+    <div id="unsupportedFileModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+            <div class="flex justify-center mb-4">
+                <span class="text-4xl text-yellow-500">⚠️</span>
+            </div>
+            <h2 class="text-xl font-bold text-red-600 mb-4">Unsupported File Type</h2>
+            <p id="unsupportedFileMessage" class="mb-6 text-gray-700">This file type is not currently supported by this web app.</p>
+            <button id="closeUnsupportedModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200">Close</button>
+        </div>
+    </div>
     <div class="container">
         <!-- Header -->
         <div class="header flex items-center justify-between">
@@ -427,7 +438,7 @@
                     class="text-white text-xl font-bold py-1 px-3 rounded-md hover:bg-gray-700 transition duration-200 ease-in-out mr-4">
                     ☰
                 </button>
-                <span class="text-lg font-bold">When Merged - Professional File Comparison Tool <span class="text-blue-400 text-sm">v1.0</span></span>
+                <span class="text-lg font-bold">When Merged - Professional File Comparison Tool <span class="text-blue-400 text-sm">v1.0.1</span></span>
             </div>
         </div>
 
@@ -707,17 +718,28 @@
                     cells.push(currentCell.trim()); // Add the last cell
                     return cells;
                 });
-
-                const headers = rows[0];
-                const data = rows.slice(1);
-                return { headers, data };
+                // Return headers and data
+                return {
+                    headers: rows[0] || [],
+                    data: rows.slice(1)
+                };
             }
-
-            // --- File Management ---
-
             // Add files selected via input
             addFilesBtn.addEventListener('click', () => {
                 fileUpload.click(); // Trigger file input click
+            });
+
+            // Modal elements for unsupported file
+            const unsupportedFileModal = document.getElementById('unsupportedFileModal');
+            const unsupportedFileMessage = document.getElementById('unsupportedFileMessage');
+            const closeUnsupportedModalBtn = document.getElementById('closeUnsupportedModalBtn');
+
+            function showUnsupportedFileModal(fileName) {
+                unsupportedFileMessage.textContent = `The file "${fileName}" is not currently supported by this web app.`;
+                unsupportedFileModal.classList.remove('hidden');
+            }
+            closeUnsupportedModalBtn.addEventListener('click', () => {
+                unsupportedFileModal.classList.add('hidden');
             });
 
             fileUpload.addEventListener('change', (event) => {
@@ -726,11 +748,15 @@
 
                 let filesAddedCount = 0;
                 Array.from(selectedFiles).forEach(file => {
+                    const fileType = getFileType(file.name);
+                    if (fileType === 'Unknown') {
+                        showUnsupportedFileModal(file.name);
+                        return;
+                    }
                     // Check if file is already added by name (simple check)
                     if (!files.some(f => f.name === file.name && f.size === file.size)) {
                         const reader = new FileReader();
                         reader.onload = (e) => {
-                            const fileType = getFileType(file.name);
                             const newFile = {
                                 name: file.name,
                                 content: e.target.result,
