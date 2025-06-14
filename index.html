@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>When Merged - Professional File Comparison Tool</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f7fa;
+            /* bg_primary from Python code */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            /* Align items to the top for better scrollability */
+            min-height: 100vh;
+            padding: 16px;
+            /* Reduced padding slightly for more content space */
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: #ffffff;
+            /* bg_card */
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1400px;
+            /* Increased max-width */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Ensures rounded corners are respected */
+        }
+
+        .header {
+            background-color: #2c3e50;
+            /* bg_accent */
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            /* Default to column on small screens */
+            flex-grow: 1;
+            padding: 16px;
+        }
+
+        .left-panel {
+            background-color: #ffffff;
+            /* bg_card */
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            padding: 16px;
+            min-width: 280px;
+            /* Equivalent to 300px width in Tkinter */
+            margin-bottom: 16px;
+            /* Spacing between panels on small screens */
+        }
+
+        .right-panel {
+            background-color: #f5f7fa;
+            /* bg_primary */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            /* border-slate-200 */
+        }
+
+        .diff-header-bar {
+            background-color: #27ae60;
+            /* accent_green */
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: bold;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .file-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .file-list-item:hover {
+            background-color: #e0f2fe;
+            /* bg-blue-100 */
+        }
+
+        .file-list-item.selected {
+            background-color: #bfdbfe;
+            /* bg-blue-200 */
+            font-weight: 600;
+        }
+
+        /* Tab styling */
+        .tab-buttons {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            /* border-slate-200 */
+        }
+
+        .tab-button {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #64748b;
+            /* text-slate-500 */
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .tab-button.active {
+            color: #2563eb;
+            /* text-blue-700 */
+            border-color: #3b82f6;
+            /* border-blue-500 */
+            background-color: white;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-button:hover:not(.active) {
+            background-color: #f8fafc;
+            /* bg-slate-50 */
+        }
+
+        .tab-content {
+            flex-grow: 1;
+            padding: 16px;
+            background-color: white;
+            /* Content background */
+            overflow-y: auto;
+            /* Enable scrolling for content */
+        }
+
+        /* Improved diff styling */
+        .diff-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+        .diff-line-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .diff-line-number {
+            min-width: 40px;
+            text-align: right;
+            padding-right: 8px;
+            color: #6b7280;
+            user-select: none;
+            background-color: #f9fafb;
+        }
+        .diff-line-content {
+            flex-grow: 1;
+            white-space: pre;
+            font-family: 'Courier New', monospace;
+            tab-size: 2;
+            color: #222222;
+        }
+
+        .added-line {
+            background-color: #d5f4e6;
+            /* added from Python code */
+            color: #27ae60;
+            /* added_text */
+        }
+
+        .removed-line {
+            background-color: #fee2e2;
+            /* changed to red for better visibility */
+            color: #dc2626;
+            /* removed_text */
+        }
+
+        .changed-line {
+            background-color: #fef3c7;
+            /* changed from Python code */
+            color: #d97706;
+            /* changed_text */
+        }
+
+        .normal-line {
+            background-color: white;
+            color: black;
+        }
+
+        .current-diff-highlight {
+            background-color: #93c5fd;
+            /* highlight from Python code */
+            outline: 2px solid #3b82f6;
+        }
+
+        /* Syntax highlighting */
+        .json-key {
+            color: #6b46c1; /* purple */
+            font-weight: bold;
+        }
+        .json-string {
+            color: #0d9488; /* teal */
+        }
+        .json-number {
+            color: #d97706; /* amber */
+        }
+        .json-boolean {
+            color: #059669; /* emerald */
+        }
+        .json-null {
+            color: #9ca3af; /* gray */
+        }
+        .json-bracket {
+            color: #4b5563; /* gray-700 */
+        }
+        
+        .xml-tag {
+            color: #2563eb; /* blue */
+            font-weight: bold;
+        }
+        .xml-attr {
+            color: #6b46c1; /* purple */
+        }
+        .xml-value {
+            color: #0d9488; /* teal */
+        }
+        .xml-comment {
+            color: #64748b; /* slate-500 */
+            font-style: italic;
+        }
+        .xml-cdata {
+            color: #d97706; /* amber */
+        }
+
+        /* Table specific styles */
+        .table-container {
+            display: flex;
+            flex-grow: 1;
+            gap: 16px;
+            /* Spacing between tables */
+            overflow-x: auto;
+            /* Enable horizontal scrolling for multiple tables */
+            font-size: 0.875rem;
+            /* text-sm */
+        }
+
+        .csv-table-wrapper {
+            flex: 1 0 auto;
+            /* Allow growth, no shrinking, base width determined by content */
+            min-width: 350px;
+            /* Minimum width for each table column */
+            max-width: 50%;
+            /* Max width for each table to prevent excessive stretching */
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: auto; /* Handles both x and y scroll for the content (table) */
+            /* Ensure tables themselves scroll if content is too wide/tall */
+            max-height: 500px; /* Static max-height for vertical scrolling */
+        }
+
+        .csv-table {
+            /* width: 100%; */ /* Removed to allow table to expand naturally */
+            border-collapse: collapse;
+            table-layout: auto; /* Allow table to size based on content and min-widths */
+        }
+
+        .csv-table th,
+        .csv-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+            white-space: nowrap;
+            /* Prevent text wrapping in cells */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* Add ellipsis for overflow */
+            min-width: 100px; /* Ensures columns have a minimum width */
+        }
+
+        .csv-table th {
+            background-color: #f8fafc;
+            /* bg-slate-50 */
+            font-weight: 600;
+            color: #475569;
+            /* text-slate-600 */
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        /* CSV row/cell highlighting */
+        .csv-table .added-row,
+        .csv-table .removed-row {
+            background-color: #d5f4e6;
+            /* Green for added/removed rows */
+        }
+
+        .csv-table .changed-row {
+            background-color: #fef3c7;
+            /* Orange for changed rows */
+        }
+
+        .csv-table .highlighted-cell {
+            background-color: #93c5fd;
+            /* Blue highlight for current diff */
+            outline: 2px solid #3b82f6;
+        }
+
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 1000;
+            display: none;
+            /* Hidden by default */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-box.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .message-box.success {
+            background-color: #dcfce7;
+            /* bg-green-100 */
+            color: #16a34a;
+            /* text-green-700 */
+        }
+
+        .message-box.error {
+            background-color: #fee2e2;
+            /* bg-red-100 */
+            color: #dc2626;
+            /* text-red-700 */
+        }
+
+        .message-box.info {
+            background-color: #e0f2fe;
+            /* bg-blue-100 */
+            color: #2563eb;
+            /* text-blue-700 */
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .content-area {
+                flex-direction: row;
+                /* Row layout on larger screens */
+                gap: 16px;
+            }
+
+            .left-panel {
+                margin-bottom: 0;
+                /* Remove bottom margin */
+                min-height: calc(100vh - 120px);
+                /* Adjust height to fill available space */
+            }
+
+            .right-panel {
+                flex-grow: 1;
+                min-height: calc(100vh - 120px);
+                /* Adjust height */
+            }
+            .diff-container {
+                flex-direction: row;
+            }
+            .diff-line-container {
+                flex-direction: row;
+            }
+        }
+        @media (max-width: 768px) {
+            .diff-container {
+                flex-direction: column;
+            }
+            .diff-line-container {
+                flex-direction: column;
+            }
+            .diff-line-number {
+                text-align: left;
+                padding-left: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header flex items-center justify-between">
+            <div class="flex items-center">
+                <button id="sidebarToggleBtn"
+                    class="text-white text-xl font-bold py-1 px-3 rounded-md hover:bg-gray-700 transition duration-200 ease-in-out mr-4">
+                    ☰
+                </button>
+                <span class="text-lg font-bold">When Merged - Professional File Comparison Tool <span class="text-blue-400 text-sm">v1.0</span></span>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="content-area">
+            <!-- Left Panel (Sidebar) -->
+            <div id="leftPanel" class="left-panel">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 border-slate-200">📁 File Management</h2>
+
+                <div class="file-list-container mb-4">
+                    <ul id="fileList" class="max-h-60 overflow-y-auto border border-slate-300 rounded-md">
+                        <!-- File items will be dynamically added here -->
+                        <li class="p-3 text-slate-500 text-center">No files added yet.</li>
+                    </ul>
+                    <p id="fileCountLabel" class="text-sm text-slate-600 mt-2 text-right">0 files selected</p>
+                </div>
+
+                <div class="flex flex-col gap-2 mb-4">
+                    <input type="file" id="fileUpload" multiple class="block w-full text-sm text-slate-500 
+                                  file:mr-4 file:py-2 file:px-4 
+                                  file:rounded-full file:border-0 
+                                  file:text-sm file:font-semibold 
+                                  file:bg-blue-50 file:text-blue-700 
+                                  hover:file:bg-blue-100 cursor-pointer">
+                    <button id="addFilesBtn"
+                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 hover:scale-105">
+                        ➕ Add Files
+                    </button>
+                    <button id="removeSelectedBtn"
+                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 hover:scale-105">
+                        ➖ Remove Selected
+                    </button>
+                    <button id="clearAllBtn"
+                        class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 hover:scale-105">
+                        🗑️ Clear All
+                    </button>
+                </div>
+
+                <button id="compareBtn"
+                    class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg w-full transform transition duration-300 hover:scale-105">
+                    🔍 COMPARE FILES
+                </button>
+
+                <!-- Download Section - Moved to bottom of left panel for prominence as a desktop app download -->
+                <!-- <div
+                    class="download-section mt-8 p-4 bg-blue-50 rounded-lg shadow-inner border border-blue-200 text-center">
+                    <h3 class="text-md font-bold text-blue-800 mb-2">Download Desktop Version</h3>
+                    <p class="text-blue-700 text-sm mb-3">
+                        For advanced features and offline usage:
+                    </p>
+                    <a id="downloadExeLink" href="https://example.com/your-app.exe" download
+                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-6 rounded-lg shadow-md transform transition duration-300 hover:scale-105">
+                        ⬇️ Get When Merged.exe
+                    </a>
+                    <p class="text-blue-500 text-xs mt-2">
+                        (Replace with your .exe URL)
+                    </p>
+                </div> -->
+            </div>
+
+            <!-- Right Panel (Comparison/Summary) -->
+            <div class="right-panel">
+                <!-- Difference Header Bar -->
+                <div class="diff-header-bar">
+                    <h2 class="text-lg">📊 Difference Results</h2>
+                    <div class="flex items-center gap-2">
+                        <button id="prevDiffBtn"
+                            class="bg-white text-green-600 font-bold py-1 px-3 rounded-md hover:bg-gray-100 transition duration-200 ease-in-out">◀</button>
+                        <span id="diffCounter">0/0</span>
+                        <button id="nextDiffBtn"
+                            class="bg-white text-green-600 font-bold py-1 px-3 rounded-md hover:bg-gray-100 transition duration-200 ease-in-out">▶</button>
+                    </div>
+                </div>
+
+                <!-- Tabs for comparison views -->
+                <div class="tab-buttons">
+                    <button id="textComparisonTabBtn" class="tab-button hidden" data-tab="text-comparison">📝 Text
+                        Comparison</button>
+                    <button id="tableComparisonTabBtn" class="tab-button hidden" data-tab="table-comparison">🔢 Table
+                        View</button>
+                    <button id="summaryTabBtn" class="tab-button hidden" data-tab="summary">📈 Summary</button>
+                </div>
+
+                <!-- Tab Content Areas -->
+                <div id="textComparisonContent"
+                    class="tab-content hidden flex-grow flex flex-col gap-4 overflow-y-auto text-sm p-4">
+                    <!-- File Headers will be dynamically added here -->
+                    <div id="fileHeadersContainer" class="flex flex-row flex-shrink-0 w-full mb-2">
+                        <!-- Dynamic headers will be placed here by JS -->
+                    </div>
+                    <div id="textDiffAreasContainer" class="flex flex-row flex-grow gap-4 w-full">
+                        <p class="text-gray-500 text-center w-full">Load and compare files to see differences here.</p>
+                    </div>
+                </div>
+
+                <div id="tableComparisonContent" class="tab-content hidden flex-grow flex flex-col p-4 overflow-y-auto">
+                    <!-- File Headers will be dynamically added here -->
+                    <div id="tableFileHeadersContainer" class="flex flex-row flex-shrink-0 w-full mb-2"></div>
+                    <!-- CSV tables for comparison will be dynamically added here -->
+                    <div id="csvTablesContainer" class="table-container">
+                        <p class="text-gray-500 text-center w-full">Load and compare CSV files to see tabular
+                            differences here.</p>
+                    </div>
+                </div>
+
+                <div id="summaryContent" class="tab-content hidden flex-grow p-4 overflow-y-auto">
+                    <h3 class="text-xl font-bold text-orange-600 mb-4 border-b pb-2 border-slate-200">📊 Detailed
+                        Analysis Report</h3>
+                    <pre id="summaryText"
+                        class="bg-gray-50 p-4 rounded-lg text-gray-800 whitespace-pre-wrap font-mono text-sm border border-slate-200">No files loaded or compared to generate statistics.</pre>
+                </div>
+
+                <!-- Legend for colors -->
+                <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium p-4 bg-white border-t border-slate-200">
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-green-200 border border-green-300"></span> Added
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-red-200 border border-red-300"></span> Removed
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-yellow-200 border border-yellow-300"></span> Changed
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-blue-200 border border-blue-300"></span> Current Difference
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-gray-100 border border-gray-300"></span> Unchanged
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div
+            class="status-bar bg-slate-200 text-slate-700 py-2 px-4 flex justify-between items-center text-sm rounded-b-lg">
+            <div class="flex items-center">
+                <span id="statusIcon" class="mr-2">✅</span>
+                <span id="statusLabel">Ready</span>
+            </div>
+            <span id="timeLabel"></span>
+        </div>
+
+        <!-- Message Box for notifications -->
+        <div id="messageBox" class="message-box"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+            const leftPanel = document.getElementById('leftPanel');
+            const fileUpload = document.getElementById('fileUpload');
+            const addFilesBtn = document.getElementById('addFilesBtn');
+            const removeSelectedBtn = document.getElementById('removeSelectedBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const fileList = document.getElementById('fileList');
+            const fileCountLabel = document.getElementById('fileCountLabel');
+            const compareBtn = document.getElementById('compareBtn');
+
+            const prevDiffBtn = document.getElementById('prevDiffBtn');
+            const nextDiffBtn = document.getElementById('nextDiffBtn');
+            const diffCounter = document.getElementById('diffCounter');
+
+            const textComparisonTabBtn = document.getElementById('textComparisonTabBtn');
+            const tableComparisonTabBtn = document.getElementById('tableComparisonTabBtn');
+            const summaryTabBtn = document.getElementById('summaryTabBtn');
+
+            const textComparisonContent = document.getElementById('textComparisonContent');
+            const tableComparisonContent = document.getElementById('tableComparisonContent');
+            const summaryContent = document.getElementById('summaryContent');
+            const summaryText = document.getElementById('summaryText');
+            const fileHeadersContainer = document.getElementById('fileHeadersContainer');
+            const tableFileHeadersContainer = document.getElementById('tableFileHeadersContainer');
+            const textDiffAreasContainer = document.getElementById('textDiffAreasContainer');
+            const csvTablesContainer = document.getElementById('csvTablesContainer');
+
+            const statusIcon = document.getElementById('statusIcon');
+            const statusLabel = document.getElementById('statusLabel');
+            const timeLabel = document.getElementById('timeLabel');
+            const messageBox = document.getElementById('messageBox');
+            const downloadExeLink = document.getElementById('downloadExeLink');
+
+            // --- State Variables ---
+            let files = []; // Stores file objects { name, content, type, parsedCsvData (if CSV) }
+            let currentDiffIndex = 0;
+            let diffPositions = []; // Stores line numbers of differences for text view
+            let tableDifferences = []; // Stores differences for table view: [{row: 0, col: 1, type: 'changed'}]
+            let fileTextAreas = []; // Array of text areas for diff view
+            let csvTableElements = []; // Array of table elements for CSV view
+            let isSidebarOpen = true;
+            let lastTextDiffStats = { additions: 0, removals: 0, changes: 0, totalDifferentLines: 0 };
+            let lastCsvDiffStats = { additions: 0, removals: 0, changes: 0, totalDiffs: 0 };
+            let currentViewTab = 'text-comparison'; // Keep track of the active tab
+
+            // --- Utility Functions ---
+
+            // Show temporary message box
+            function showMessage(type, message, duration = 3000) {
+                messageBox.textContent = message;
+                messageBox.className = `message-box show ${type}`;
+                setTimeout(() => {
+                    messageBox.classList.remove('show');
+                }, duration);
+            }
+
+            // Update status bar
+            function updateStatus(type, message) {
+                const icons = {
+                    'success': '✅',
+                    'warning': '⚠️',
+                    'error': '❌',
+                    'info': 'ℹ️',
+                    'loading': '🔄'
+                };
+                const colors = {
+                    'success': '#16a34a', /* text-green-700 */
+                    'warning': '#d97706', /* text-yellow-700 */
+                    'error': '#dc2626', /* text-red-700 */
+                    'info': '#2563eb', /* text-blue-700 */
+                    'loading': '#4f46e5' /* text-indigo-700 */
+                };
+                statusIcon.textContent = icons[type] || 'ℹ️';
+                statusLabel.textContent = message;
+                statusLabel.style.color = colors[type] || 'black';
+            }
+
+            // Update real-time clock
+            function updateTime() {
+                timeLabel.textContent = new Date().toLocaleTimeString();
+                requestAnimationFrame(updateTime); // Use requestAnimationFrame for smoother updates
+            }
+            updateTime(); // Start the clock
+
+            // Detect file type based on extension
+            function getFileType(fileName) {
+                const ext = fileName.split('.').pop().toLowerCase();
+                const supportedFormats = {
+                    'txt': 'Plain Text',
+                    'json': 'JSON',
+                    'xml': 'XML',
+                    'csv': 'CSV',
+                    'ini': 'Configuration',
+                    'cfg': 'Configuration',
+                    'py': 'Python',
+                    'js': 'JavaScript',
+                    'html': 'HTML',
+                    'css': 'CSS',
+                    'sql': 'SQL',
+                    'log': 'Log File',
+                    'md': 'Markdown'
+                };
+                return supportedFormats[ext] || 'Unknown';
+            }
+
+            // --- CSV Parsing ---
+            function parseCsv(csvString) {
+                const lines = csvString.split(/\r?\n/).filter(line => line.trim() !== ''); // Filter out empty lines
+                if (lines.length === 0) return { headers: [], data: [] };
+
+                const rows = lines.map(line => {
+                    // Simple CSV parsing, handles commas within quotes
+                    const cells = [];
+                    let inQuote = false;
+                    let currentCell = '';
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"' && (i === 0 || line[i - 1] === ',' || line[i - 1] === ' ')) { // Handle opening quote
+                            inQuote = !inQuote;
+                        } else if (char === ',' && !inQuote) {
+                            cells.push(currentCell.trim());
+                            currentCell = '';
+                        } else {
+                            currentCell += char;
+                        }
+                    }
+                    cells.push(currentCell.trim()); // Add the last cell
+                    return cells;
+                });
+
+                const headers = rows[0];
+                const data = rows.slice(1);
+                return { headers, data };
+            }
+
+            // --- File Management ---
+
+            // Add files selected via input
+            addFilesBtn.addEventListener('click', () => {
+                fileUpload.click(); // Trigger file input click
+            });
+
+            fileUpload.addEventListener('change', (event) => {
+                const selectedFiles = event.target.files;
+                if (selectedFiles.length === 0) return;
+
+                let filesAddedCount = 0;
+                Array.from(selectedFiles).forEach(file => {
+                    // Check if file is already added by name (simple check)
+                    if (!files.some(f => f.name === file.name && f.size === file.size)) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const fileType = getFileType(file.name);
+                            const newFile = {
+                                name: file.name,
+                                content: e.target.result,
+                                type: fileType
+                            };
+
+                            if (fileType === 'CSV') {
+                                newFile.parsedCsvData = parseCsv(e.target.result);
+                            }
+
+                            files.push(newFile);
+                            renderFileList();
+                            updateFileCount();
+                            updateStatus('info', `Added "${file.name}"`);
+                            filesAddedCount++;
+                            if (filesAddedCount === selectedFiles.length) {
+                                showMessage('success', `Added ${filesAddedCount} files.`, 3000);
+                            }
+                        };
+                        reader.onerror = () => {
+                            showMessage('error', `Could not read file "${file.name}".`, 5000);
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        updateStatus('warning', `File "${file.name}" already exists.`);
+                    }
+                });
+                // Reset file input to allow re-selection of same file
+                fileUpload.value = '';
+            });
+
+            // Render the file list in the sidebar
+            function renderFileList() {
+                fileList.innerHTML = '';
+                if (files.length === 0) {
+                    fileList.innerHTML = '<li class="p-3 text-slate-500 text-center">No files added yet.</li>';
+                    return;
+                }
+
+                files.forEach((file, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.className = `file-list-item text-slate-700 hover:bg-blue-100 cursor-pointer rounded-lg`;
+                    listItem.innerHTML = `
+                        <span>📄 ${file.name} <span class="text-slate-500 text-xs">(${file.type})</span></span>
+                        <input type="checkbox" data-index="${index}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md">
+                    `;
+                    fileList.appendChild(listItem);
+                });
+            }
+
+            // Remove selected files
+            removeSelectedBtn.addEventListener('click', () => {
+                const checkboxes = fileList.querySelectorAll('input[type="checkbox"]:checked');
+                if (checkboxes.length === 0) {
+                    showMessage('warning', 'No files selected to remove.', 3000);
+                    return;
+                }
+
+                const indicesToRemove = Array.from(checkboxes)
+                    .map(cb => parseInt(cb.dataset.index))
+                    .sort((a, b) => b - a); // Sort descending to remove without affecting indices
+
+                indicesToRemove.forEach(index => {
+                    files.splice(index, 1);
+                });
+
+                renderFileList();
+                updateFileCount();
+                clearComparisonDisplay(); // Clear comparison results after removing files
+                showMessage('info', `Removed ${indicesToRemove.length} files.`, 3000);
+            });
+
+            // Clear all files
+            clearAllBtn.addEventListener('click', () => {
+                files = [];
+                renderFileList();
+                updateFileCount();
+                clearComparisonDisplay();
+                showMessage('info', 'All files cleared.', 3000);
+            });
+
+            // Update the count label
+            function updateFileCount() {
+                const count = files.length;
+                fileCountLabel.textContent = `${count} files selected`;
+                if (count < 2) {
+                    compareBtn.disabled = true;
+                    compareBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    if (count === 1) {
+                        fileCountLabel.textContent += ' (need 2+ to compare)';
+                    }
+                    // Hide all tabs when less than 2 files
+                    textComparisonTabBtn.classList.add('hidden');
+                    tableComparisonTabBtn.classList.add('hidden');
+                    summaryTabBtn.classList.add('hidden');
+                } else {
+                    compareBtn.disabled = false;
+                    compareBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    
+                    // Check if both files are CSV to determine which tabs to show
+                    const areBothCsv = files.every(f => f.type === 'CSV');
+                    
+                    if (areBothCsv) {
+                        // Show only table view and summary for CSV files
+                        tableComparisonTabBtn.classList.remove('hidden');
+                        textComparisonTabBtn.classList.add('hidden');
+                        summaryTabBtn.classList.remove('hidden');
+                        switchTab('table-comparison'); // Switch to table view
+                    } else {
+                        // Show only text comparison and summary for non-CSV files
+                        textComparisonTabBtn.classList.remove('hidden');
+                        tableComparisonTabBtn.classList.add('hidden');
+                        summaryTabBtn.classList.remove('hidden');
+                        switchTab('text-comparison'); // Switch to text view
+                    }
+                }
+            }
+
+            // --- Comparison Logic ---
+
+            compareBtn.addEventListener('click', compareFiles);
+
+            function compareFiles() {
+                if (files.length < 2) {
+                    showMessage('warning', 'Please add at least two files to compare.', 3000);
+                    return;
+                }
+                updateStatus('loading', 'Performing comparison...');
+
+                clearComparisonDisplay(); // Clear previous display
+
+                const file1 = files[0];
+                const file2 = files[1];
+
+                // Determine if both files are CSV for view switching and specialized comparison
+                const areBothCsv = file1.type === 'CSV' && file2.type === 'CSV';
+
+                if (areBothCsv) {
+                    performCsvComparison(file1.parsedCsvData, file2.parsedCsvData);
+                    switchTab('table-comparison'); // Switch to table view for CSVs
+                } else {
+                    createDynamicTextAreas(); // Create text areas for current files
+                    const lines1 = file1.content.split(/\r?\n/);
+                    const lines2 = file2.content.split(/\r?\n/);
+                    const diffResult = getTwoFileDiff(lines1, lines2, file1.type, file2.type);
+                    renderTextDiff(diffResult);
+                    switchTab('text-comparison'); // Switch to text view for non-CSV or mixed
+                }
+
+                // Populate summary statistics
+                displaySummary();
+                updateStatus('success', 'Comparison completed.');
+                showMessage('success', 'Comparison complete!', 3000);
+            }
+
+            // Enhanced text diffing algorithm
+            function getTwoFileDiff(lines1, lines2, fileType1, fileType2) {
+                const diff = [];
+                const maxLen = Math.max(lines1.length, lines2.length);
+                const uniqueDiffLines = new Set();
+                let currentLineNumber = 0;
+
+                // Track JSON structure and keys
+                let jsonStructure = {
+                    currentPath: [],
+                    file1Keys: new Set(),
+                    file2Keys: new Set()
+                };
+
+                // Helper to extract key from a JSON line
+                function getJsonKey(line) {
+                    if (!line) return null;
+                    const match = line.match(/^\s*"([^"]+)"\s*:/);
+                    return match ? match[1] : null;
+                }
+
+                // Update JSON structure tracking
+                function updateJsonStructure(line, fileNum) {
+                    const key = getJsonKey(line);
+                    if (!key) return;
+
+                    const path = [...jsonStructure.currentPath, key].join('.');
+                    if (fileNum === 1) {
+                        jsonStructure.file1Keys.add(path);
+                    } else {
+                        jsonStructure.file2Keys.add(path);
+                    }
+
+                    // Check if line opens a new object
+                    if (line.trim().endsWith('{')) {
+                        jsonStructure.currentPath.push(key);
+                    }
+                    // Check if line closes an object
+                    else if (line.trim() === '}') {
+                        jsonStructure.currentPath.pop();
+                    }
+                }
+
+                for (let i = 0; i < maxLen; i++) {
+                    currentLineNumber++;
+                    const line1 = lines1[i] !== undefined ? lines1[i] : null;
+                    const line2 = lines2[i] !== undefined ? lines2[i] : null;
+
+                    // Update structure tracking for each file
+                    if (line1) updateJsonStructure(line1, 1);
+                    if (line2) updateJsonStructure(line2, 2);
+
+                    if (line1 === line2) {
+                        diff.push({ type: 'equal', value: line1 });
+                    } else {
+                        // Check if this is a new object in file2
+                        const key = getJsonKey(line2);
+                        let isNewObject = false;
+
+                        if (key) {
+                            const currentPath = [...jsonStructure.currentPath, key].join('.');
+                            isNewObject = !jsonStructure.file1Keys.has(currentPath) &&
+                                jsonStructure.file2Keys.has(currentPath);
+                        }
+
+                        if (isNewObject) {
+                            // New object (like "beta") - show as added (green)
+                            diff.push({ type: 'added', value: line2 });
+                            uniqueDiffLines.add(currentLineNumber);
+
+                            // Skip comparing the contents of this new object
+                            if (line2.trim().endsWith('{')) {
+                                let depth = 1;
+                                while (depth > 0 && i < maxLen - 1) {
+                                    i++;
+                                    currentLineNumber++;
+                                    const nextLine = lines2[i];
+                                    diff.push({ type: 'added', value: nextLine });
+                                    if (nextLine.trim().endsWith('{')) depth++;
+                                    if (nextLine.trim() === '}') depth--;
+                                }
+                            }
+                            continue;
+                        }
+
+                        // Lines are different, or one is null
+                        if (line1 !== null && line2 !== null) {
+                            // Both lines exist but are different
+                            let classifiedAsChanged = false;
+
+                            // JSON-specific comparison
+                            if (fileType1 === 'JSON' && fileType2 === 'JSON') {
+                                const key1 = getJsonKey(line1);
+                                const key2 = getJsonKey(line2);
+
+                                // Check if both lines have keys and they match
+                                if (key1 && key2 && key1 === key2) {
+                                    diff.push({
+                                        type: 'changed',
+                                        original: line1,
+                                        modified: line2,
+                                        key: key1
+                                    });
+                                    classifiedAsChanged = true;
+                                }
+                            }
+
+                            if (!classifiedAsChanged) {
+                                // Default for different non-null lines
+                                diff.push({ type: 'removed', value: line1 });
+                                diff.push({ type: 'added', value: line2 });
+                            }
+                            uniqueDiffLines.add(currentLineNumber);
+                        } else if (line1 !== null) {
+                            // line2 is null: line removed (green)
+                            diff.push({ type: 'removed', value: line1 });
+                            uniqueDiffLines.add(currentLineNumber);
+                        } else {
+                            // line1 is null, line2 is not null: line added (green)
+                            diff.push({ type: 'added', value: line2 });
+                            uniqueDiffLines.add(currentLineNumber);
+                        }
+                    }
+                }
+
+                // Calculate and store statistics for the summary report
+                let additions = 0, removals = 0, changes = 0;
+                diff.forEach(item => {
+                    if (item.type === 'added') additions++;
+                    else if (item.type === 'removed') removals++;
+                    else if (item.type === 'changed') changes++;
+                });
+                lastTextDiffStats = { additions, removals, changes, totalDifferentLines: uniqueDiffLines.size };
+
+                diffPositions = Array.from(uniqueDiffLines).sort((a, b) => a - b);
+                currentDiffIndex = 0;
+                updateDiffCounter();
+                return diff;
+            }
+
+            // CSV comparison logic (Key-based)
+            function performCsvComparison(csvData1, csvData2) {
+                tableDifferences = []; // Reset table differences
+                currentDiffIndex = 0; // Reset diff index for tables
+
+                const headers1 = csvData1.headers;
+                const data1 = csvData1.data;
+                const headers2 = csvData2.headers;
+                const data2 = csvData2.data;
+
+                // Create maps for efficient lookup by assumed key (first column)
+                // Filter out rows where the key column is empty or undefined to avoid issues
+                const map1 = new Map(data1.filter(row => row[0]).map(row => [row[0], row]));
+                const map2 = new Map(data2.filter(row => row[0]).map(row => [row[0], row]));
+
+                // Collect all unique keys
+                const allKeys = new Set([...map1.keys(), ...map2.keys()]);
+
+                const comparisonResults = []; // Stores the diff for each conceptual row
+
+                // For rendering, we want a consistent order, perhaps by sorted keys
+                const sortedKeys = Array.from(allKeys).sort();
+
+                for (const key of sortedKeys) {
+                    const row1 = map1.get(key);
+                    const row2 = map2.get(key);
+
+                    const rowData1 = row1 || []; // Use empty array if row not present
+                    const rowData2 = row2 || [];
+
+                    let rowType = 'equal';
+                    let rowDiffs = []; // Store column indices of changes within the row
+
+                    if (row1 && !row2) {
+                        rowType = 'removed'; // Key exists in file1, not in file2 (e.g., test1 on left, not on right)
+                    } else if (!row1 && row2) {
+                        rowType = 'added'; // Key exists in file2, not in file1 (e.g., Rico)
+                    } else { // Key exists in both (e.g., Angel, test1)
+                        let hasCellChanges = false;
+                        const currentMaxCols = Math.max(rowData1.length, rowData2.length, headers1.length, headers2.length);
+                        for (let c = 0; c < currentMaxCols; c++) {
+                            const cell1 = rowData1[c] !== undefined ? rowData1[c] : '';
+                            const cell2 = rowData2[c] !== undefined ? rowData2[c] : '';
+                            if (cell1 !== cell2) {
+                                hasCellChanges = true;
+                                rowDiffs.push({ col: c, type: 'changed' }); // Mark individual cell change
+                            }
+                        }
+                        if (hasCellChanges) {
+                            rowType = 'changed'; // Mark row as changed if any cells differ
+                        } else {
+                            rowType = 'equal';
+                        }
+                    }
+
+                    comparisonResults.push({
+                        key: key, // Store the key for reference
+                        rowType: rowType,
+                        diffs: rowDiffs,
+                        data1: rowData1,
+                        data2: rowData2
+                    });
+
+                    // Store differences for navigation, using the *index in the comparisonResults array*
+                    if (rowType !== 'equal' || rowDiffs.length > 0) {
+                        tableDifferences.push({
+                            rowIndexInComparisonResults: comparisonResults.length - 1, // Store the index of this diffed row
+                            type: rowType,
+                            changedCells: rowDiffs.map(d => d.col)
+                        });
+                    }
+                }
+
+                // Determine overall max columns for consistent table rendering across all rows
+                let overallMaxCols = Math.max(headers1.length, headers2.length);
+                comparisonResults.forEach(res => {
+                    overallMaxCols = Math.max(overallMaxCols, res.data1.length, res.data2.length);
+                });
+
+                // Render the tables using the comparisonResults
+                renderCsvTables(headers1, headers2, comparisonResults, overallMaxCols);
+                updateDiffCounter();
+
+                // Calculate and store CSV diff statistics for summary
+                let csvAdditions = 0, csvRemovals = 0, csvChanges = 0;
+                tableDifferences.forEach(diffItem => {
+                    if (diffItem.type === 'added') csvAdditions++;
+                    else if (diffItem.type === 'removed') csvRemovals++;
+                    else if (diffItem.type === 'changed') csvChanges++;
+                });
+                lastCsvDiffStats = { additions: csvAdditions, removals: csvRemovals, changes: csvChanges, totalDiffs: tableDifferences.length };
+            }
+
+            function createDynamicTextAreas() {
+                fileHeadersContainer.innerHTML = '';
+                textDiffAreasContainer.innerHTML = ''; // Clear existing text areas or placeholder
+                fileTextAreas = []; // Reset array
+
+                // Create a div for each file's content
+                files.forEach((file, index) => {
+                    // Create content area for the file's text with filename on top
+                    const contentDiv = document.createElement('div');
+                    contentDiv.style.flexBasis = `calc(${100 / files.length}% - ${files.length > 1 ? '8px' : '0px'})`;
+                    contentDiv.className = `flex flex-col min-w-[200px] border border-slate-300 rounded-lg overflow-hidden`;
+
+                    // Create header for the file (filename on top)
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = `text-center font-bold text-gray-700 p-2 border-b border-gray-300 bg-gray-50`;
+                    headerDiv.textContent = file.name;
+                    contentDiv.appendChild(headerDiv);
+
+                    const textArea = document.createElement('div');
+                    textArea.className = `w-full h-full p-2 overflow-auto bg-white`;
+                    textArea.id = `fileContent-${index}`;
+                    textArea.style.tabSize = 2;
+                    textArea.addEventListener('scroll', syncScroll);
+
+                    const diffContainer = document.createElement('div');
+                    diffContainer.className = 'diff-container';
+                    textArea.appendChild(diffContainer);
+
+                    contentDiv.appendChild(textArea);
+                    textDiffAreasContainer.appendChild(contentDiv);
+                    fileTextAreas.push(diffContainer);
+                });
+            }
+
+            function renderTextDiff(diffResult) {
+                // Clear existing content in all text areas
+                fileTextAreas.forEach(ta => ta.innerHTML = '');
+
+                let lineNum = 0;
+                diffResult.forEach(item => {
+                    lineNum++;
+                    
+                    if (item.type === 'equal') {
+                        // For 'equal', display the line in all relevant panels
+                        fileTextAreas.forEach(ta => {
+                            const lineContainer = document.createElement('div');
+                            lineContainer.className = 'diff-line-container normal-line';
+                            
+                            const lineNumber = document.createElement('div');
+                            lineNumber.className = 'diff-line-number';
+                            lineNumber.textContent = lineNum;
+                            
+                            const lineContent = document.createElement('div');
+                            lineContent.className = 'diff-line-content';
+                            lineContent.innerHTML = syntaxHighlight(item.value);
+                            
+                            lineContainer.appendChild(lineNumber);
+                            lineContainer.appendChild(lineContent);
+                            ta.appendChild(lineContainer);
+                        });
+                    } 
+                    else if (item.type === 'removed') {
+                        // Line only in file 1 (removed from file 2's perspective)
+                        const lineContainer = document.createElement('div');
+                        lineContainer.className = 'diff-line-container removed-line';
+                        
+                        const lineNumber = document.createElement('div');
+                        lineNumber.className = 'diff-line-number';
+                        lineNumber.textContent = lineNum;
+                        
+                        const lineContent = document.createElement('div');
+                        lineContent.className = 'diff-line-content';
+                        lineContent.innerHTML = syntaxHighlight(item.value);
+                        
+                        lineContainer.appendChild(lineNumber);
+                        lineContainer.appendChild(lineContent);
+                        fileTextAreas[0].appendChild(lineContainer);
+
+                        // Add a blank line in other text areas to maintain alignment
+                        for (let i = 1; i < fileTextAreas.length; i++) {
+                            const emptyContainer = document.createElement('div');
+                            emptyContainer.className = 'diff-line-container normal-line';
+                            emptyContainer.innerHTML = `
+                                <div class="diff-line-number">${lineNum}</div>
+                                <div class="diff-line-content"></div>
+                            `;
+                            fileTextAreas[i].appendChild(emptyContainer);
+                        }
+                    } 
+                    else if (item.type === 'added') {
+                        // Line only in file 2 (added to file 1's perspective)
+                        const lineContainer = document.createElement('div');
+                        lineContainer.className = 'diff-line-container added-line';
+                        
+                        const lineNumber = document.createElement('div');
+                        lineNumber.className = 'diff-line-number';
+                        lineNumber.textContent = lineNum;
+                        
+                        const lineContent = document.createElement('div');
+                        lineContent.className = 'diff-line-content';
+                        lineContent.innerHTML = syntaxHighlight(item.value);
+                        
+                        lineContainer.appendChild(lineNumber);
+                        lineContainer.appendChild(lineContent);
+                        fileTextAreas[1].appendChild(lineContainer);
+
+                        // Add a blank line in other text areas for alignment
+                        for (let i = 0; i < fileTextAreas.length; i++) {
+                            if (i === 1) continue;
+                            const emptyContainer = document.createElement('div');
+                            emptyContainer.className = 'diff-line-container normal-line';
+                            emptyContainer.innerHTML = `
+                                <div class="diff-line-number">${lineNum}</div>
+                                <div class="diff-line-content"></div>
+                            `;
+                            fileTextAreas[i].appendChild(emptyContainer);
+                        }
+                    } 
+                    else if (item.type === 'changed') {
+                        // Changed line - show original in first panel, modified in second
+                        const lineContainer1 = document.createElement('div');
+                        lineContainer1.className = 'diff-line-container changed-line';
+                        
+                        const lineNumber1 = document.createElement('div');
+                        lineNumber1.className = 'diff-line-number';
+                        lineNumber1.textContent = lineNum;
+                        
+                        const lineContent1 = document.createElement('div');
+                        lineContent1.className = 'diff-line-content';
+                        lineContent1.innerHTML = syntaxHighlight(item.original);
+                        
+                        lineContainer1.appendChild(lineNumber1);
+                        lineContainer1.appendChild(lineContent1);
+                        fileTextAreas[0].appendChild(lineContainer1);
+
+                        const lineContainer2 = document.createElement('div');
+                        lineContainer2.className = 'diff-line-container changed-line';
+                        
+                        const lineNumber2 = document.createElement('div');
+                        lineNumber2.className = 'diff-line-number';
+                        lineNumber2.textContent = lineNum;
+                        
+                        const lineContent2 = document.createElement('div');
+                        lineContent2.className = 'diff-line-content';
+                        lineContent2.innerHTML = syntaxHighlight(item.modified);
+                        
+                        lineContainer2.appendChild(lineNumber2);
+                        lineContainer2.appendChild(lineContent2);
+                        fileTextAreas[1].appendChild(lineContainer2);
+
+                        // For any additional panels (if more than 2 files), add blank lines
+                        for (let i = 2; i < fileTextAreas.length; i++) {
+                            const emptyContainer = document.createElement('div');
+                            emptyContainer.className = 'diff-line-container normal-line';
+                            emptyContainer.innerHTML = `
+                                <div class="diff-line-number">${lineNum}</div>
+                                <div class="diff-line-content"></div>
+                            `;
+                            fileTextAreas[i].appendChild(emptyContainer);
+                        }
+                    }
+                });
+
+                // Call highlightCurrentDiff only after rendering is complete
+                if (currentViewTab === 'text-comparison') {
+                    highlightCurrentDiff();
+                }
+            }
+
+            // Syntax highlighting for JSON/XML
+            function syntaxHighlight(text) {
+                if (!text) return '';
+                
+                // Try to parse as JSON first
+                try {
+                    const json = JSON.parse(text);
+                    text = JSON.stringify(json, null, 2);
+                    return highlightJson(text);
+                } catch (e) {
+                    // Not valid JSON, try XML highlighting
+                    return highlightXml(text);
+                }
+            }
+
+            function highlightJson(json) {
+                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, 
+                    function (match) {
+                        let cls = 'json-number';
+                        if (/^"/.test(match)) {
+                            if (/:$/.test(match)) {
+                                cls = 'json-key';
+                            } else {
+                                cls = 'json-string';
+                            }
+                        } else if (/true|false/.test(match)) {
+                            cls = 'json-boolean';
+                        } else if (/null/.test(match)) {
+                            cls = 'json-null';
+                        }
+                        return '<span class="' + cls + '">' + match + '</span>';
+                    })
+                    .replace(/{|}|\[|\]/g, function(match) {
+                        return '<span class="json-bracket">' + match + '</span>';
+                    });
+            }
+
+            function highlightXml(xml) {
+                // Simple XML highlighting
+                return xml.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/&lt;([^&]+)&gt;/g, function(match, tag) {
+                        return '&lt;<span class="xml-tag">' + tag + '</span>&gt;';
+                    })
+                    .replace(/(\S+)=&quot;([^&]+)&quot;/g, function(match, attr, value) {
+                        return '<span class="xml-attr">' + attr + '</span>=&quot;<span class="xml-value">' + value + '</span>&quot;';
+                    })
+                    .replace(/&lt;!--([^&]+)--&gt;/g, function(match, comment) {
+                        return '&lt;!--<span class="xml-comment">' + comment + '</span>--&gt;';
+                    })
+                    .replace(/&lt;!\[CDATA\[([^&]+)\]\]&gt;/g, function(match, cdata) {
+                        return '&lt;![CDATA[<span class="xml-cdata">' + cdata + '</span>]]&gt;';
+                    });
+            }
+
+            function renderCsvTables(headers1, headers2, comparisonResults, overallMaxCols) {
+                csvTablesContainer.innerHTML = ''; // Clear previous tables
+                tableFileHeadersContainer.innerHTML = ''; // Clear previous headers
+                csvTableElements = []; // Reset table elements array
+
+                const file1 = files[0];
+                const file2 = files[1];
+
+                // Create headers for the tables
+                const header1Div = document.createElement('div');
+                header1Div.className = `flex-1 text-center font-bold text-gray-700 p-2 border-b border-gray-300`;
+                header1Div.textContent = file1.name;
+                tableFileHeadersContainer.appendChild(header1Div);
+
+                const header2Div = document.createElement('div');
+                header2Div.className = `flex-1 text-center font-bold text-gray-700 p-2 border-b border-gray-300`;
+                header2Div.textContent = file2.name;
+                tableFileHeadersContainer.appendChild(header2Div);
+
+                // Create wrappers for each table
+                const table1Wrapper = document.createElement('div');
+                table1Wrapper.className = 'csv-table-wrapper';
+                const table2Wrapper = document.createElement('div');
+                table2Wrapper.className = 'csv-table-wrapper';
+
+                const table1 = document.createElement('table');
+                table1.className = 'csv-table';
+                const table2 = document.createElement('table');
+                table2.className = 'csv-table';
+
+                // Store table elements for scrolling
+                csvTableElements.push(table1Wrapper, table2Wrapper);
+
+                // Append headers to tables (padded to overallMaxCols)
+                const createTableHead = (originalHeaders, totalCols) => {
+                    const thead = document.createElement('thead');
+                    const tr = document.createElement('tr');
+                    for (let i = 0; i < totalCols; i++) {
+                        const th = document.createElement('th');
+                        th.textContent = originalHeaders[i] || `Col ${i + 1}`; // Use original header or default
+                        tr.appendChild(th);
+                    }
+                    thead.appendChild(tr);
+                    return thead;
+                };
+
+                table1.appendChild(createTableHead(headers1, overallMaxCols));
+                table2.appendChild(createTableHead(headers2, overallMaxCols));
+
+                const tbody1 = document.createElement('tbody');
+                const tbody2 = document.createElement('tbody');
+                table1.appendChild(tbody1);
+                table2.appendChild(tbody2);
+
+                comparisonResults.forEach((result, displayRowIndex) => {
+                    const rowType = result.rowType;
+                    const tr1 = document.createElement('tr');
+                    const tr2 = document.createElement('tr');
+
+                    // Apply row-level highlighting classes based on key-based comparison
+                    if (rowType === 'added' || rowType === 'removed') {
+                        tr1.classList.add('added-row');
+                        tr2.classList.add('added-row');
+                    } else if (rowType === 'changed') {
+                        tr1.classList.add('changed-row');
+                        tr2.classList.add('changed-row');
+                    }
+
+                    // Populate cells for table 1
+                    for (let c = 0; c < overallMaxCols; c++) {
+                        const cell1Value = result.data1[c] !== undefined ? result.data1[c] : '';
+                        const td1 = document.createElement('td');
+                        td1.textContent = cell1Value;
+                        td1.dataset.displayRow = displayRowIndex;
+                        td1.dataset.col = c;
+                        tr1.appendChild(td1);
+
+                        // If this cell was part of a 'changed' diff
+                        if (rowType === 'changed' && result.diffs.some(diff => diff.col === c)) {
+                            td1.classList.add('highlighted-cell');
+                        }
+                    }
+                    tbody1.appendChild(tr1);
+
+                    // Populate cells for table 2
+                    for (let c = 0; c < overallMaxCols; c++) {
+                        const cell2Value = result.data2[c] !== undefined ? result.data2[c] : '';
+                        const td2 = document.createElement('td');
+                        td2.textContent = cell2Value;
+                        td2.dataset.displayRow = displayRowIndex;
+                        td2.dataset.col = c;
+                        tr2.appendChild(td2);
+
+                        // If this cell was part of a 'changed' diff
+                        if (rowType === 'changed' && result.diffs.some(diff => diff.col === c)) {
+                            td2.classList.add('highlighted-cell');
+                        }
+                    }
+                    tbody2.appendChild(tr2);
+                });
+
+                table1Wrapper.appendChild(table1);
+                table2Wrapper.appendChild(table2);
+                csvTablesContainer.appendChild(table1Wrapper);
+                csvTablesContainer.appendChild(table2Wrapper);
+
+                // Attach scroll sync to table wrappers
+                table1Wrapper.addEventListener('scroll', syncTableScroll);
+                table2Wrapper.addEventListener('scroll', syncTableScroll);
+
+                const noFilesMsg = csvTablesContainer.querySelector('p');
+                if (noFilesMsg) noFilesMsg.remove();
+
+                if (currentViewTab === 'table-comparison') {
+                    highlightCurrentDiff();
+                }
+            }
+
+            function clearComparisonDisplay() {
+                fileHeadersContainer.innerHTML = '';
+                textDiffAreasContainer.innerHTML = '';
+                fileTextAreas = [];
+                diffPositions = [];
+
+                tableFileHeadersContainer.innerHTML = '';
+                csvTablesContainer.innerHTML = '';
+                csvTableElements = [];
+                tableDifferences = [];
+
+                // Add vertical placeholder if no files
+                if (files.length < 2) {
+                    textDiffAreasContainer.innerHTML = '<div class="flex flex-col w-full"><p class="text-gray-500 text-center w-full">Load and compare files to see differences here.</p></div>';
+                    csvTablesContainer.innerHTML = '<div class="flex flex-col w-full"><p class="text-gray-500 text-center w-full">Load and compare CSV files to see tabular differences here.</p></div>';
+                }
+
+                lastTextDiffStats = { additions: 0, removals: 0, changes: 0, totalDifferentLines: 0 };
+                lastCsvDiffStats = { additions: 0, removals: 0, changes: 0, totalDiffs: 0 };
+
+                currentDiffIndex = 0;
+                updateDiffCounter();
+                summaryText.textContent = 'No files loaded or compared to generate statistics.';
+            }
+
+            // --- Scroll Synchronization ---
+            function syncScroll(event) {
+                const target = event.target;
+                fileTextAreas.forEach((textArea, index) => {
+                    if (textArea.parentNode.parentNode !== target) {
+                        textArea.parentNode.parentNode.scrollTop = target.scrollTop;
+                    }
+                });
+            }
+
+            function syncTableScroll(event) {
+                const target = event.target;
+                csvTableElements.forEach(tableWrapper => {
+                    if (tableWrapper !== target) {
+                        tableWrapper.scrollTop = target.scrollTop;
+                        tableWrapper.scrollLeft = target.scrollLeft;
+                    }
+                });
+            }
+
+            // --- Difference Navigation ---
+            prevDiffBtn.addEventListener('click', () => {
+                const currentDiffs = currentViewTab === 'text-comparison' ? diffPositions : tableDifferences;
+                if (currentDiffs.length === 0) {
+                    showMessage('info', 'No differences found.', 3000);
+                    return;
+                }
+                currentDiffIndex = (currentDiffIndex - 1 + currentDiffs.length) % currentDiffs.length;
+                highlightCurrentDiff();
+                updateDiffCounter();
+                showMessage('info', `Navigating to previous difference (${currentDiffIndex + 1}/${currentDiffs.length})`, 1500);
+            });
+
+            nextDiffBtn.addEventListener('click', () => {
+                const currentDiffs = currentViewTab === 'text-comparison' ? diffPositions : tableDifferences;
+                if (currentDiffs.length === 0) {
+                    showMessage('info', 'No differences found.', 3000);
+                    return;
+                }
+                currentDiffIndex = (currentDiffIndex + 1) % currentDiffs.length;
+                highlightCurrentDiff();
+                updateDiffCounter();
+                showMessage('info', `Navigating to next difference (${currentDiffIndex + 1}/${currentDiffs.length})`, 1500);
+            });
+
+            function updateDiffCounter() {
+                const currentDiffs = currentViewTab === 'text-comparison' ? diffPositions : tableDifferences;
+                diffCounter.textContent = `${currentDiffs.length > 0 ? currentDiffIndex + 1 : 0}/${currentDiffs.length}`;
+            }
+
+            function highlightCurrentDiff() {
+                // Clear previous highlights
+                fileTextAreas.forEach(textArea => {
+                    Array.from(textArea.children).forEach(line => {
+                        line.classList.remove('current-diff-highlight');
+                    });
+                });
+                csvTableElements.forEach(tableWrapper => {
+                    const cells = tableWrapper.querySelectorAll('.highlighted-cell');
+                    cells.forEach(cell => cell.classList.remove('current-diff-highlight'));
+                    const rows = tableWrapper.querySelectorAll('.added-row, .removed-row, .changed-row');
+                    rows.forEach(row => row.classList.remove('current-diff-highlight'));
+                });
+
+                if (currentViewTab === 'text-comparison') {
+                    if (diffPositions.length > 0) {
+                        const targetLine = diffPositions[currentDiffIndex];
+                        fileTextAreas.forEach(textArea => {
+                            const lineElement = textArea.children[targetLine - 1]; // Line numbers are 1-based, array is 0-based
+                            if (lineElement) {
+                                lineElement.classList.add('current-diff-highlight');
+                                lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        });
+                    }
+                } else if (currentViewTab === 'table-comparison') {
+                    if (tableDifferences.length > 0) {
+                        const diff = tableDifferences[currentDiffIndex];
+                        const displayRowIndex = diff.rowIndexInComparisonResults;
+
+                        csvTableElements.forEach(tableWrapper => {
+                            // Find the row by its display index (nth-child)
+                            const rowElement = tableWrapper.querySelector(`tbody tr:nth-child(${displayRowIndex + 1})`);
+                            if (rowElement) {
+                                rowElement.classList.add('current-diff-highlight');
+
+                                // Also highlight specific cells if 'changed' type has changedCells info
+                                if (diff.type === 'changed' && diff.changedCells) {
+                                    diff.changedCells.forEach(colIndex => {
+                                        const cellElement = rowElement.children[colIndex];
+                                        if (cellElement) {
+                                            cellElement.classList.add('current-diff-highlight');
+                                        }
+                                    });
+                                }
+                                rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        });
+                    }
+                }
+            }
+
+            // --- Tab Switching ---
+            textComparisonTabBtn.addEventListener('click', () => switchTab('text-comparison'));
+            tableComparisonTabBtn.addEventListener('click', () => switchTab('table-comparison'));
+            summaryTabBtn.addEventListener('click', () => switchTab('summary'));
+
+            function switchTab(tabId) {
+                currentViewTab = tabId; // Update the current active tab
+
+                // Deactivate all tab buttons and hide all tab contents
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+
+                // Explicitly hide all tab contents and their specific headers first
+                textComparisonContent.classList.add('hidden');
+                tableComparisonContent.classList.add('hidden');
+                summaryContent.classList.add('hidden');
+                fileHeadersContainer.classList.add('hidden');
+                tableFileHeadersContainer.classList.add('hidden');
+
+                // Activate the selected tab button and show its content
+                if (tabId === 'text-comparison') {
+                    textComparisonTabBtn.classList.add('active');
+                    textComparisonContent.classList.remove('hidden');
+                    fileHeadersContainer.classList.remove('hidden');
+                } else if (tabId === 'table-comparison') {
+                    tableComparisonTabBtn.classList.add('active');
+                    tableComparisonContent.classList.remove('hidden');
+                    tableFileHeadersContainer.classList.remove('hidden');
+                } else if (tabId === 'summary') {
+                    summaryTabBtn.classList.add('active');
+                    summaryContent.classList.remove('hidden');
+                }
+                updateDiffCounter();
+                highlightCurrentDiff();
+                // Ensure vertical layout for diff containers
+                if (currentViewTab === 'text-comparison') {
+                    fileTextAreas.forEach(ta => {
+                        ta.style.display = 'flex';
+                        ta.style.flexDirection = 'column';
+                    });
+                }
+                if (currentViewTab === 'table-comparison') {
+                    csvTableElements.forEach(wrapper => {
+                        wrapper.style.display = 'flex';
+                        wrapper.style.flexDirection = 'column';
+                    });
+                }
+            }
+
+            // --- Summary/Statistics ---
+            function displaySummary() {
+                let report = "File Details:\n";
+                report += "=============\n\n";
+
+                if (files.length === 0) {
+                    report += "No files loaded.\n";
+                    summaryText.textContent = report;
+                    return;
+                }
+
+                files.forEach((file, index) => {
+                    const lines = file.content.split(/\r?\n/);
+                    const lineCount = lines.filter(l => l.trim() !== '' || lines.length === 1).length;
+                    const wordCount = file.content.split(/\s+/).filter(word => word.length > 0).length;
+
+                    report += `File ${index + 1}: ${file.name}\n`;
+                    report += `  Type: ${file.type}\n`;
+                    report += `  Size: ${new Blob([file.content]).size} bytes\n`;
+                    report += `  Lines: ${lineCount}\n`;
+                    report += `  Words (estimate): ${wordCount}\n\n`;
+                });
+
+                report += "\nComparison Analysis:\n";
+                report += "--------------------\n";
+
+                if (files.length < 2) {
+                    report += "Not enough files to compare for analysis.\n";
+                } else {
+                    let statsToUse = null;
+                    let mode = "";
+                    let comparisonWasAttempted = (fileTextAreas.length > 0 || csvTableElements.length > 0);
+
+                    if (currentViewTab === 'text-comparison' && (lastTextDiffStats.totalDifferentLines > 0 || lastTextDiffStats.additions > 0 || lastTextDiffStats.removals > 0 || lastTextDiffStats.changes > 0 || comparisonWasAttempted)) {
+                        statsToUse = lastTextDiffStats;
+                        mode = "Text Comparison";
+                    } else if (currentViewTab === 'table-comparison' && (lastCsvDiffStats.totalDiffs > 0 || lastCsvDiffStats.additions > 0 || lastCsvDiffStats.removals > 0 || lastCsvDiffStats.changes > 0 || comparisonWasAttempted)) {
+                        statsToUse = lastCsvDiffStats;
+                        mode = "CSV Table Comparison";
+                    }
+
+                    if (statsToUse && (statsToUse.totalDifferentLines > 0 || statsToUse.totalDiffs > 0 || statsToUse.additions > 0 || statsToUse.removals > 0 || statsToUse.changes > 0)) {
+                        report += `Mode: ${mode}\n`;
+                        if (mode === "Text Comparison") {
+                            report += `  Lines with differences: ${statsToUse.totalDifferentLines}\n`;
+                            report += `  Added segments: ${statsToUse.additions}\n`;
+                            report += `  Removed segments: ${statsToUse.removals}\n`;
+                            report += `  Modified values (JSON): ${statsToUse.changes}\n`;
+                        } else {
+                            report += `  Total different rows: ${statsToUse.totalDiffs}\n`;
+                            report += `  Rows Added: ${statsToUse.additions}\n`;
+                            report += `  Rows Removed: ${statsToUse.removals}\n`;
+                            report += `  Rows Changed: ${statsToUse.changes}\n`;
+                        }
+                    } else if (comparisonWasAttempted) {
+                        report += `Mode: ${mode || (files.every(f => f.type === 'CSV') ? 'CSV Table Comparison' : 'Text Comparison')}\n`;
+                        report += "No differences found.\n";
+                    } else {
+                        report += "Comparison not yet performed.\n";
+                    }
+                }
+                summaryText.textContent = report;
+            }
+
+            // --- Sidebar Toggle ---
+            sidebarToggleBtn.addEventListener('click', () => {
+                isSidebarOpen = !isSidebarOpen;
+                if (isSidebarOpen) {
+                    leftPanel.style.display = 'block';
+                    leftPanel.classList.add('md:min-w-[280px]');
+                    leftPanel.classList.remove('hidden');
+                    showMessage('info', 'Sidebar opened.', 1500);
+                } else {
+                    leftPanel.style.display = 'none';
+                    leftPanel.classList.remove('md:min-w-[280px]');
+                    leftPanel.classList.add('hidden');
+                    showMessage('info', 'Sidebar closed.', 1500);
+                }
+            });
+
+            // --- Initial Setup ---
+            renderFileList();
+            updateFileCount();
+            updateDiffCounter();
+            // Hide all tabs initially
+            textComparisonTabBtn.classList.add('hidden');
+            tableComparisonTabBtn.classList.add('hidden');
+            summaryTabBtn.classList.add('hidden');
+            textComparisonContent.classList.add('hidden');
+            tableComparisonContent.classList.add('hidden');
+            summaryContent.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
