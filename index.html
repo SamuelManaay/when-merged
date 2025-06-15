@@ -167,11 +167,13 @@
             gap: 4px;
             width: 100%;
         }
+
         .diff-line-container {
             display: flex;
             flex-direction: column;
             width: 100%;
         }
+
         .diff-line-number {
             min-width: 40px;
             text-align: right;
@@ -180,6 +182,7 @@
             user-select: none;
             background-color: #f9fafb;
         }
+
         .diff-line-content {
             flex-grow: 1;
             white-space: pre;
@@ -222,41 +225,61 @@
 
         /* Syntax highlighting */
         .json-key {
-            color: #6b46c1; /* purple */
+            color: #6b46c1;
+            /* purple */
             font-weight: bold;
         }
+
         .json-string {
-            color: #0d9488; /* teal */
+            color: #0d9488;
+            /* teal */
         }
+
         .json-number {
-            color: #d97706; /* amber */
+            color: #d97706;
+            /* amber */
         }
+
         .json-boolean {
-            color: #059669; /* emerald */
+            color: #059669;
+            /* emerald */
         }
+
         .json-null {
-            color: #9ca3af; /* gray */
+            color: #9ca3af;
+            /* gray */
         }
+
         .json-bracket {
-            color: #4b5563; /* gray-700 */
+            color: #4b5563;
+            /* gray-700 */
         }
-        
+
         .xml-tag {
-            color: #2563eb; /* blue */
+            color: #2563eb;
+            /* blue */
             font-weight: bold;
         }
+
         .xml-attr {
-            color: #6b46c1; /* purple */
+            color: #6b46c1;
+            /* purple */
         }
+
         .xml-value {
-            color: #0d9488; /* teal */
+            color: #0d9488;
+            /* teal */
         }
+
         .xml-comment {
-            color: #64748b; /* slate-500 */
+            color: #64748b;
+            /* slate-500 */
             font-style: italic;
         }
+
         .xml-cdata {
-            color: #d97706; /* amber */
+            color: #d97706;
+            /* amber */
         }
 
         /* Table specific styles */
@@ -280,15 +303,19 @@
             /* Max width for each table to prevent excessive stretching */
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            overflow: auto; /* Handles both x and y scroll for the content (table) */
+            overflow: auto;
+            /* Handles both x and y scroll for the content (table) */
             /* Ensure tables themselves scroll if content is too wide/tall */
-            max-height: 500px; /* Static max-height for vertical scrolling */
+            max-height: 500px;
+            /* Static max-height for vertical scrolling */
         }
 
         .csv-table {
-            /* width: 100%; */ /* Removed to allow table to expand naturally */
+            /* width: 100%; */
+            /* Removed to allow table to expand naturally */
             border-collapse: collapse;
-            table-layout: auto; /* Allow table to size based on content and min-widths */
+            table-layout: auto;
+            /* Allow table to size based on content and min-widths */
         }
 
         .csv-table th,
@@ -301,7 +328,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
             /* Add ellipsis for overflow */
-            min-width: 100px; /* Ensures columns have a minimum width */
+            min-width: 100px;
+            /* Ensures columns have a minimum width */
         }
 
         .csv-table th {
@@ -396,20 +424,25 @@
                 min-height: calc(100vh - 120px);
                 /* Adjust height */
             }
+
             .diff-container {
                 flex-direction: row;
             }
+
             .diff-line-container {
                 flex-direction: row;
             }
         }
+
         @media (max-width: 768px) {
             .diff-container {
                 flex-direction: column;
             }
+
             .diff-line-container {
                 flex-direction: column;
             }
+
             .diff-line-number {
                 text-align: left;
                 padding-left: 8px;
@@ -420,25 +453,107 @@
 
 <body>
     <!-- Unsupported File Modal -->
-    <div id="unsupportedFileModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div id="unsupportedFileModal"
+        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
             <div class="flex justify-center mb-4">
                 <span class="text-4xl text-yellow-500">⚠️</span>
             </div>
             <h2 class="text-xl font-bold text-red-600 mb-4">Unsupported File Type</h2>
-            <p id="unsupportedFileMessage" class="mb-6 text-gray-700">This file type is not currently supported by this web app.</p>
-            <button id="closeUnsupportedModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200">Close</button>
+            <p id="unsupportedFileMessage" class="mb-6 text-gray-700">This file type is not currently supported by this
+                web app.</p>
+            <button id="closeUnsupportedModalBtn"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200">Close</button>
         </div>
     </div>
     <div class="container">
         <!-- Header -->
         <div class="header flex items-center justify-between">
             <div class="flex items-center">
-                <button id="sidebarToggleBtn"
-                    class="text-white text-xl font-bold py-1 px-3 rounded-md hover:bg-gray-700 transition duration-200 ease-in-out mr-4">
-                    ☰
-                </button>
-                <span class="text-lg font-bold">When Merged - Professional File Comparison Tool <span class="text-blue-400 text-sm">v1.0.1</span></span>
+            <button id="sidebarToggleBtn"
+                class="text-white text-xl font-bold py-1 px-3 rounded-md hover:bg-gray-700 transition duration-200 ease-in-out mr-4">
+                ☰
+            </button>
+            <!-- Terms and Agreement Modal -->
+            <div id="termsModal"
+                class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-lg p-12 max-w-3xl w-full text-left" style="max-height:90vh;">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6">Terms and Agreement</h2>
+                <div class="mb-8 text-gray-800 text-base max-h-[70vh] overflow-y-auto leading-relaxed space-y-6">
+                    <p>
+                    <strong>When Merged - Professional File Comparison Tool</strong> is a web-based application that works entirely in your browser.
+                    <br><br>
+                    We want to make it clear that <span class="font-bold text-green-700">we do not collect, store, or transmit</span> any of your files or data to any server.
+                    Your privacy and data security are very important to us.
+                    </p>
+                    <p>
+                    When you attach files for comparison, the files are only read and processed by your browser.
+                    All file processing, including reading, analyzing, and comparing, happens locally on your device.
+                    At no point are your files uploaded, sent, or shared with any external server or third party.
+                    </p>
+                    <p>
+                    The files you attach are kept only in your browser's memory for as long as you are using the app.
+                    If you remove a file or use the "Clear All" button, all file data is immediately deleted from the browser memory.
+                    After this, the app cannot access or recover your files in any way.
+                    </p>
+                    <p>
+                    We do not use cookies, tracking scripts, or analytics that access your files.
+                    The only information stored is what is needed for the app to function while you are using it, and nothing is saved after you close or refresh the page.
+                    </p>
+                    <p>
+                    If you have questions about how your data is handled, you can review the source code of this application or contact us for more information.
+                    Your files always stay private and under your control when using When Merged.
+                    </p>
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button id="agreeTermsBtn"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded-lg shadow transition duration-200 text-lg">Agree</button>
+                    <button id="closeTermsBtn"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-8 rounded-lg shadow transition duration-200 text-lg">Disagree</button>
+                </div>
+                </div>
+            </div>
+            <script>
+                // Terms modal logic
+                document.addEventListener('DOMContentLoaded', function () {
+                const termsBtn = document.getElementById('termsBtn');
+                const termsModal = document.getElementById('termsModal');
+                const closeTermsBtn = document.getElementById('closeTermsBtn');
+                const agreeTermsBtn = document.getElementById('agreeTermsBtn');
+
+                // Show modal on first load (block app until agree)
+                if (termsModal && !sessionStorage.getItem('termsAgreed')) {
+                    termsModal.classList.remove('hidden');
+                }
+
+                if (termsBtn && termsModal) {
+                    termsBtn.addEventListener('click', () => {
+                    termsModal.classList.remove('hidden');
+                    });
+                }
+
+                if (agreeTermsBtn && termsModal) {
+                    agreeTermsBtn.addEventListener('click', () => {
+                    termsModal.classList.add('hidden');
+                    sessionStorage.setItem('termsAgreed', 'true');
+                    });
+                }
+
+                if (closeTermsBtn && termsModal) {
+                    closeTermsBtn.addEventListener('click', () => {
+                    // Disagree: close the web app
+                    window.close();
+                    // If window.close() fails (not opened by script), redirect to about:blank
+                    setTimeout(() => {
+                        window.location.href = 'about:blank';
+                    }, 100);
+                    });
+                }
+                });
+            </script>
+            <img src="logov1.png" alt="When Merged Logo" class="h-8 w-8 mr-3 inline-block align-middle">
+            <span class="text-lg font-bold align-middle">When Merged - Professional File Comparison Tool <span
+                class="text-blue-400 text-sm">v1.0.1</span></span>
             </div>
         </div>
 
@@ -457,12 +572,7 @@
                 </div>
 
                 <div class="flex flex-col gap-2 mb-4">
-                    <input type="file" id="fileUpload" multiple class="block w-full text-sm text-slate-500 
-                                  file:mr-4 file:py-2 file:px-4 
-                                  file:rounded-full file:border-0 
-                                  file:text-sm file:font-semibold 
-                                  file:bg-blue-50 file:text-blue-700 
-                                  hover:file:bg-blue-100 cursor-pointer">
+                    <input type="file" id="fileUpload"  multiple class="hidden">
                     <button id="addFilesBtn"
                         class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 hover:scale-105">
                         ➕ Add Files
@@ -855,10 +965,10 @@
                 } else {
                     compareBtn.disabled = false;
                     compareBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    
+
                     // Check if both files are CSV to determine which tabs to show
                     const areBothCsv = files.every(f => f.type === 'CSV');
-                    
+
                     if (areBothCsv) {
                         // Show only table view and summary for CSV files
                         tableComparisonTabBtn.classList.remove('hidden');
@@ -1186,39 +1296,39 @@
                 let lineNum = 0;
                 diffResult.forEach(item => {
                     lineNum++;
-                    
+
                     if (item.type === 'equal') {
                         // For 'equal', display the line in all relevant panels
                         fileTextAreas.forEach(ta => {
                             const lineContainer = document.createElement('div');
                             lineContainer.className = 'diff-line-container normal-line';
-                            
+
                             const lineNumber = document.createElement('div');
                             lineNumber.className = 'diff-line-number';
                             lineNumber.textContent = lineNum;
-                            
+
                             const lineContent = document.createElement('div');
                             lineContent.className = 'diff-line-content';
                             lineContent.innerHTML = syntaxHighlight(item.value);
-                            
+
                             lineContainer.appendChild(lineNumber);
                             lineContainer.appendChild(lineContent);
                             ta.appendChild(lineContainer);
                         });
-                    } 
+                    }
                     else if (item.type === 'removed') {
                         // Line only in file 1 (removed from file 2's perspective)
                         const lineContainer = document.createElement('div');
                         lineContainer.className = 'diff-line-container removed-line';
-                        
+
                         const lineNumber = document.createElement('div');
                         lineNumber.className = 'diff-line-number';
                         lineNumber.textContent = lineNum;
-                        
+
                         const lineContent = document.createElement('div');
                         lineContent.className = 'diff-line-content';
                         lineContent.innerHTML = syntaxHighlight(item.value);
-                        
+
                         lineContainer.appendChild(lineNumber);
                         lineContainer.appendChild(lineContent);
                         fileTextAreas[0].appendChild(lineContainer);
@@ -1233,20 +1343,20 @@
                             `;
                             fileTextAreas[i].appendChild(emptyContainer);
                         }
-                    } 
+                    }
                     else if (item.type === 'added') {
                         // Line only in file 2 (added to file 1's perspective)
                         const lineContainer = document.createElement('div');
                         lineContainer.className = 'diff-line-container added-line';
-                        
+
                         const lineNumber = document.createElement('div');
                         lineNumber.className = 'diff-line-number';
                         lineNumber.textContent = lineNum;
-                        
+
                         const lineContent = document.createElement('div');
                         lineContent.className = 'diff-line-content';
                         lineContent.innerHTML = syntaxHighlight(item.value);
-                        
+
                         lineContainer.appendChild(lineNumber);
                         lineContainer.appendChild(lineContent);
                         fileTextAreas[1].appendChild(lineContainer);
@@ -1262,35 +1372,35 @@
                             `;
                             fileTextAreas[i].appendChild(emptyContainer);
                         }
-                    } 
+                    }
                     else if (item.type === 'changed') {
                         // Changed line - show original in first panel, modified in second
                         const lineContainer1 = document.createElement('div');
                         lineContainer1.className = 'diff-line-container changed-line';
-                        
+
                         const lineNumber1 = document.createElement('div');
                         lineNumber1.className = 'diff-line-number';
                         lineNumber1.textContent = lineNum;
-                        
+
                         const lineContent1 = document.createElement('div');
                         lineContent1.className = 'diff-line-content';
                         lineContent1.innerHTML = syntaxHighlight(item.original);
-                        
+
                         lineContainer1.appendChild(lineNumber1);
                         lineContainer1.appendChild(lineContent1);
                         fileTextAreas[0].appendChild(lineContainer1);
 
                         const lineContainer2 = document.createElement('div');
                         lineContainer2.className = 'diff-line-container changed-line';
-                        
+
                         const lineNumber2 = document.createElement('div');
                         lineNumber2.className = 'diff-line-number';
                         lineNumber2.textContent = lineNum;
-                        
+
                         const lineContent2 = document.createElement('div');
                         lineContent2.className = 'diff-line-content';
                         lineContent2.innerHTML = syntaxHighlight(item.modified);
-                        
+
                         lineContainer2.appendChild(lineNumber2);
                         lineContainer2.appendChild(lineContent2);
                         fileTextAreas[1].appendChild(lineContainer2);
@@ -1317,7 +1427,7 @@
             // Syntax highlighting for JSON/XML
             function syntaxHighlight(text) {
                 if (!text) return '';
-                
+
                 // Try to parse as JSON first
                 try {
                     const json = JSON.parse(text);
@@ -1331,7 +1441,7 @@
 
             function highlightJson(json) {
                 json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, 
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
                     function (match) {
                         let cls = 'json-number';
                         if (/^"/.test(match)) {
@@ -1347,7 +1457,7 @@
                         }
                         return '<span class="' + cls + '">' + match + '</span>';
                     })
-                    .replace(/{|}|\[|\]/g, function(match) {
+                    .replace(/{|}|\[|\]/g, function (match) {
                         return '<span class="json-bracket">' + match + '</span>';
                     });
             }
@@ -1355,16 +1465,16 @@
             function highlightXml(xml) {
                 // Simple XML highlighting
                 return xml.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                    .replace(/&lt;([^&]+)&gt;/g, function(match, tag) {
+                    .replace(/&lt;([^&]+)&gt;/g, function (match, tag) {
                         return '&lt;<span class="xml-tag">' + tag + '</span>&gt;';
                     })
-                    .replace(/(\S+)=&quot;([^&]+)&quot;/g, function(match, attr, value) {
+                    .replace(/(\S+)=&quot;([^&]+)&quot;/g, function (match, attr, value) {
                         return '<span class="xml-attr">' + attr + '</span>=&quot;<span class="xml-value">' + value + '</span>&quot;';
                     })
-                    .replace(/&lt;!--([^&]+)--&gt;/g, function(match, comment) {
+                    .replace(/&lt;!--([^&]+)--&gt;/g, function (match, comment) {
                         return '&lt;!--<span class="xml-comment">' + comment + '</span>--&gt;';
                     })
-                    .replace(/&lt;!\[CDATA\[([^&]+)\]\]&gt;/g, function(match, cdata) {
+                    .replace(/&lt;!\[CDATA\[([^&]+)\]\]&gt;/g, function (match, cdata) {
                         return '&lt;![CDATA[<span class="xml-cdata">' + cdata + '</span>]]&gt;';
                     });
             }
@@ -1756,4 +1866,5 @@
         });
     </script>
 </body>
+
 </html>
