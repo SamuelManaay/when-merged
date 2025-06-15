@@ -554,7 +554,7 @@
             </script>
             
             <span class="text-lg font-bold align-middle">When Merged - Professional File Comparison Tool <span
-                class="text-blue-400 text-sm">v1.0.1</span></span>
+                class="text-blue-400 text-sm">v1.0.3</span></span>
             </div>
         </div>
 
@@ -1292,7 +1292,7 @@
                     contentDiv.appendChild(headerDiv);
 
                     const textArea = document.createElement('div');
-                    textArea.className = `w-full h-full p-2 overflow-auto bg-white`;
+                    textArea.className = `w-full h-full p-2 overflow-auto bg-white max-h-[500px]`; // Added max-h-[500px]
                     textArea.id = `fileContent-${index}`;
                     textArea.style.tabSize = 2;
                     textArea.addEventListener('scroll', syncScroll);
