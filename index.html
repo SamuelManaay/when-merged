@@ -472,7 +472,8 @@
             <div class="flex items-center">
             <button id="sidebarToggleBtn"
                 class="text-white text-xl font-bold py-1 px-3 rounded-md hover:bg-gray-700 transition duration-200 ease-in-out mr-4">
-                ☰
+                <!-- ☰ -->
+                 <img src="logov1.png" alt="When Merged Logo" class="h-8 w-8 mr-3 inline-block align-middle">
             </button>
             <!-- Terms and Agreement Modal -->
             <div id="termsModal"
@@ -551,7 +552,7 @@
                 }
                 });
             </script>
-            <img src="logov1.png" alt="When Merged Logo" class="h-8 w-8 mr-3 inline-block align-middle">
+            
             <span class="text-lg font-bold align-middle">When Merged - Professional File Comparison Tool <span
                 class="text-blue-400 text-sm">v1.0.1</span></span>
             </div>
@@ -610,74 +611,84 @@
             </div>
 
             <!-- Right Panel (Comparison/Summary) -->
-            <div class="right-panel">
-                <!-- Difference Header Bar -->
-                <div class="diff-header-bar">
-                    <h2 class="text-lg">📊 Difference Results</h2>
-                    <div class="flex items-center gap-2">
-                        <button id="prevDiffBtn"
-                            class="bg-white text-green-600 font-bold py-1 px-3 rounded-md hover:bg-gray-100 transition duration-200 ease-in-out">◀</button>
-                        <span id="diffCounter">0/0</span>
-                        <button id="nextDiffBtn"
-                            class="bg-white text-green-600 font-bold py-1 px-3 rounded-md hover:bg-gray-100 transition duration-200 ease-in-out">▶</button>
+            <div id="rightPanel" class="right-panel"> <!-- Removed 'hidden' class -->
+                <!-- Logo Placeholder -->
+                <div id="logoPlaceholderContainer" class="flex-grow flex flex-col items-center justify-center p-8 text-center">
+                    <img src="WM.png" alt="When Merged Logo" class="w-72 h-72 md:w-96 md:h-96 mb-6 opacity-75"> <!-- Made even bigger -->
+                    <!-- Removed h2 from here as it's in the comparisonUIContainer -->
+                    <p class="text-slate-500">Load and compare files to see differences here.</p>
+                </div>
+
+                <!-- Comparison UI Container -->
+                <div id="comparisonUIContainer" class="hidden w-full flex flex-col flex-grow">
+                    <!-- Difference Header Bar -->
+                    <div class="diff-header-bar">
+                        <h2 class="text-lg">📊 Difference Results</h2>
+                        <div class="flex items-center gap-2">
+                            <button id="prevDiffBtn"
+                                class="bg-white text-green-600 font-bold py-1 px-3 rounded-md hover:bg-gray-100 transition duration-200 ease-in-out">◀</button>
+                            <span id="diffCounter">0/0</span>
+                            <button id="nextDiffBtn"
+                                class="bg-white text-green-600 font-bold py-1 px-3 rounded-md hover:bg-gray-100 transition duration-200 ease-in-out">▶</button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Tabs for comparison views -->
-                <div class="tab-buttons">
-                    <button id="textComparisonTabBtn" class="tab-button hidden" data-tab="text-comparison">📝 Text
-                        Comparison</button>
-                    <button id="tableComparisonTabBtn" class="tab-button hidden" data-tab="table-comparison">🔢 Table
-                        View</button>
-                    <button id="summaryTabBtn" class="tab-button hidden" data-tab="summary">📈 Summary</button>
-                </div>
-
-                <!-- Tab Content Areas -->
-                <div id="textComparisonContent"
-                    class="tab-content hidden flex-grow flex flex-col gap-4 overflow-y-auto text-sm p-4">
-                    <!-- File Headers will be dynamically added here -->
-                    <div id="fileHeadersContainer" class="flex flex-row flex-shrink-0 w-full mb-2">
-                        <!-- Dynamic headers will be placed here by JS -->
+                    <!-- Tabs for comparison views -->
+                    <div class="tab-buttons">
+                        <button id="textComparisonTabBtn" class="tab-button hidden" data-tab="text-comparison">📝 Text
+                            Comparison</button>
+                        <button id="tableComparisonTabBtn" class="tab-button hidden" data-tab="table-comparison">🔢 Table
+                            View</button>
+                        <button id="summaryTabBtn" class="tab-button hidden" data-tab="summary">📈 Summary</button>
                     </div>
-                    <div id="textDiffAreasContainer" class="flex flex-row flex-grow gap-4 w-full">
-                        <p class="text-gray-500 text-center w-full">Load and compare files to see differences here.</p>
+
+                    <!-- Tab Content Areas -->
+                    <div id="textComparisonContent"
+                        class="tab-content hidden flex-grow flex flex-col gap-4 overflow-y-auto text-sm p-4">
+                        <!-- File Headers will be dynamically added here -->
+                        <div id="fileHeadersContainer" class="flex flex-row flex-shrink-0 w-full mb-2">
+                            <!-- Dynamic headers will be placed here by JS -->
+                        </div>
+                        <div id="textDiffAreasContainer" class="flex flex-row flex-grow gap-4 w-full">
+                            <p class="text-gray-500 text-center w-full">Load and compare files to see differences here.</p>
+                        </div>
                     </div>
-                </div>
 
-                <div id="tableComparisonContent" class="tab-content hidden flex-grow flex flex-col p-4 overflow-y-auto">
-                    <!-- File Headers will be dynamically added here -->
-                    <div id="tableFileHeadersContainer" class="flex flex-row flex-shrink-0 w-full mb-2"></div>
-                    <!-- CSV tables for comparison will be dynamically added here -->
-                    <div id="csvTablesContainer" class="table-container">
-                        <p class="text-gray-500 text-center w-full">Load and compare CSV files to see tabular
-                            differences here.</p>
+                    <div id="tableComparisonContent" class="tab-content hidden flex-grow flex flex-col p-4 overflow-y-auto">
+                        <!-- File Headers will be dynamically added here -->
+                        <div id="tableFileHeadersContainer" class="flex flex-row flex-shrink-0 w-full mb-2"></div>
+                        <!-- CSV tables for comparison will be dynamically added here -->
+                        <div id="csvTablesContainer" class="table-container">
+                            <p class="text-gray-500 text-center w-full">Load and compare CSV files to see tabular
+                                differences here.</p>
+                        </div>
                     </div>
-                </div>
 
-                <div id="summaryContent" class="tab-content hidden flex-grow p-4 overflow-y-auto">
-                    <h3 class="text-xl font-bold text-orange-600 mb-4 border-b pb-2 border-slate-200">📊 Detailed
-                        Analysis Report</h3>
-                    <pre id="summaryText"
-                        class="bg-gray-50 p-4 rounded-lg text-gray-800 whitespace-pre-wrap font-mono text-sm border border-slate-200">No files loaded or compared to generate statistics.</pre>
-                </div>
+                    <div id="summaryContent" class="tab-content hidden flex-grow p-4 overflow-y-auto">
+                        <h3 class="text-xl font-bold text-orange-600 mb-4 border-b pb-2 border-slate-200">📊 Detailed
+                            Analysis Report</h3>
+                        <pre id="summaryText"
+                            class="bg-gray-50 p-4 rounded-lg text-gray-800 whitespace-pre-wrap font-mono text-sm border border-slate-200">No files loaded or compared to generate statistics.</pre>
+                    </div>
 
-                <!-- Legend for colors -->
-                <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium p-4 bg-white border-t border-slate-200">
-                    <span class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded-full bg-green-200 border border-green-300"></span> Added
-                    </span>
-                    <span class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded-full bg-red-200 border border-red-300"></span> Removed
-                    </span>
-                    <span class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded-full bg-yellow-200 border border-yellow-300"></span> Changed
-                    </span>
-                    <span class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded-full bg-blue-200 border border-blue-300"></span> Current Difference
-                    </span>
-                    <span class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded-full bg-gray-100 border border-gray-300"></span> Unchanged
-                    </span>
+                    <!-- Legend for colors -->
+                    <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium p-4 bg-white border-t border-slate-200">
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-green-200 border border-green-300"></span> Added
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-red-200 border border-red-300"></span> Removed
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-yellow-200 border border-yellow-300"></span> Changed
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-blue-200 border border-blue-300"></span> Current Difference
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-gray-100 border border-gray-300"></span> Unchanged
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -709,6 +720,9 @@
             const fileCountLabel = document.getElementById('fileCountLabel');
             const compareBtn = document.getElementById('compareBtn');
 
+            const rightPanel = document.getElementById('rightPanel');
+            const logoPlaceholderContainer = document.getElementById('logoPlaceholderContainer');
+            const comparisonUIContainer = document.getElementById('comparisonUIContainer');
             const prevDiffBtn = document.getElementById('prevDiffBtn');
             const nextDiffBtn = document.getElementById('nextDiffBtn');
             const diffCounter = document.getElementById('diffCounter');
@@ -944,6 +958,8 @@
                 files = [];
                 renderFileList();
                 updateFileCount();
+                logoPlaceholderContainer.classList.remove('hidden'); // Show logo
+                comparisonUIContainer.classList.add('hidden'); // Hide comparison UI
                 clearComparisonDisplay();
                 showMessage('info', 'All files cleared.', 3000);
             });
@@ -990,6 +1006,8 @@
             compareBtn.addEventListener('click', compareFiles);
 
             function compareFiles() {
+                logoPlaceholderContainer.classList.add('hidden');
+                comparisonUIContainer.classList.remove('hidden');
                 if (files.length < 2) {
                     showMessage('warning', 'Please add at least two files to compare.', 3000);
                     return;
