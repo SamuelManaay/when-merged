@@ -404,6 +404,12 @@
             /* text-blue-700 */
         }
 
+        .summary-report-content {
+            max-height: 500px; /* Adjust as needed */
+            overflow-y: auto;
+            white-space: pre-wrap; /* Ensure pre formatting is respected */
+        }
+
         /* Responsive adjustments */
         @media (min-width: 768px) {
             .content-area {
@@ -555,7 +561,7 @@
             </script>
             
             <span class="text-lg font-bold align-middle">When Merged - Professional File Comparison Tool <span
-            class="text-blue-400 text-sm">v1.0.5</span></span>
+            class="text-blue-400 text-sm">v1.1.0</span></span>
             </div>
         </div>
 
@@ -668,8 +674,7 @@
                     <div id="summaryContent" class="tab-content hidden flex-grow p-4 overflow-y-auto">
                         <h3 class="text-xl font-bold text-orange-600 mb-4 border-b pb-2 border-slate-200">📊 Detailed
                             Analysis Report</h3>
-                        <pre id="summaryText"
-                            class="bg-gray-50 p-4 rounded-lg text-gray-800 whitespace-pre-wrap font-mono text-sm border border-slate-200">No files loaded or compared to generate statistics.</pre>
+                        <pre id="summaryText" class="summary-report-content bg-gray-50 p-4 rounded-lg text-gray-800 font-mono text-sm border border-slate-200">No files loaded or compared to generate statistics.</pre>
                     </div>
 
                     <!-- Legend for colors -->
@@ -752,12 +757,16 @@
             let currentDiffIndex = 0;
             let diffPositions = []; // Stores line numbers of differences for text view
             let tableDifferences = []; // Stores differences for table view: [{row: 0, col: 1, type: 'changed'}]
+            let detailedTextChanges = []; // Stores specific text change details for summary
+            let detailedCsvChanges = []; // Stores specific CSV change details for summary
             let fileTextAreas = []; // Array of text areas for diff view
             let csvTableElements = []; // Array of table elements for CSV view
             let isSidebarOpen = true;
             let lastTextDiffStats = { additions: 0, removals: 0, changes: 0, totalDifferentLines: 0 };
             let lastCsvDiffStats = { additions: 0, removals: 0, changes: 0, totalDiffs: 0 };
             let currentViewTab = 'text-comparison'; // Keep track of the active tab
+
+            const MAX_DETAILED_SUMMARY_ITEMS = 100;
 
             // --- Utility Functions ---
 
@@ -797,6 +806,13 @@
                 requestAnimationFrame(updateTime); // Use requestAnimationFrame for smoother updates
             }
             updateTime(); // Start the clock
+
+            function truncateText(text, maxLength = 50) {
+                if (text && text.length > maxLength) {
+                    return text.substring(0, maxLength - 3) + "...";
+                }
+                return text;
+            }
 
             // Detect file type based on extension
             function getFileType(fileName) {
@@ -1044,6 +1060,7 @@
             // Enhanced text diffing algorithm
             function getTwoFileDiff(lines1, lines2, fileType1, fileType2) {
                 const diff = [];
+                detailedTextChanges = []; // Reset detailed changes
                 const maxLen = Math.max(lines1.length, lines2.length);
                 const uniqueDiffLines = new Set();
                 let currentLineNumber = 0;
@@ -1110,6 +1127,7 @@
                             // New object (like "beta") - show as added (green)
                             diff.push({ type: 'added', value: line2 });
                             uniqueDiffLines.add(currentLineNumber);
+                            detailedTextChanges.push({ type: 'added', lineNumber: currentLineNumber, value: line2 });
 
                             // Skip comparing the contents of this new object
                             if (line2.trim().endsWith('{')) {
@@ -1118,6 +1136,7 @@
                                     i++;
                                     currentLineNumber++;
                                     const nextLine = lines2[i];
+                                    if (nextLine === undefined) break; // Safety break
                                     diff.push({ type: 'added', value: nextLine });
                                     if (nextLine.trim().endsWith('{')) depth++;
                                     if (nextLine.trim() === '}') depth--;
@@ -1144,23 +1163,29 @@
                                         modified: line2,
                                         key: key1
                                     });
+                                    detailedTextChanges.push({ type: 'changed', lineNumber: currentLineNumber, original: line1, modified: line2, key: key1 });
                                     classifiedAsChanged = true;
                                 }
                             }
 
                             if (!classifiedAsChanged) {
                                 // Default for different non-null lines
+                                // Treat as removal of old line, addition of new line for summary clarity
                                 diff.push({ type: 'removed', value: line1 });
+                                detailedTextChanges.push({ type: 'removed', lineNumber: currentLineNumber, value: line1 });
                                 diff.push({ type: 'added', value: line2 });
+                                detailedTextChanges.push({ type: 'added', lineNumber: currentLineNumber, value: line2 }); // Note: same line number, but conceptually a replacement
                             }
                             uniqueDiffLines.add(currentLineNumber);
                         } else if (line1 !== null) {
-                            // line2 is null: line removed (green)
+                            // line2 is null: line removed
                             diff.push({ type: 'removed', value: line1 });
+                            detailedTextChanges.push({ type: 'removed', lineNumber: currentLineNumber, value: line1 });
                             uniqueDiffLines.add(currentLineNumber);
                         } else {
-                            // line1 is null, line2 is not null: line added (green)
+                            // line1 is null, line2 is not null: line added
                             diff.push({ type: 'added', value: line2 });
+                            detailedTextChanges.push({ type: 'added', lineNumber: currentLineNumber, value: line2 });
                             uniqueDiffLines.add(currentLineNumber);
                         }
                     }
@@ -1184,6 +1209,7 @@
             // CSV comparison logic (Key-based)
             function performCsvComparison(csvData1, csvData2) {
                 tableDifferences = []; // Reset table differences
+                detailedCsvChanges = []; // Reset detailed CSV changes
                 currentDiffIndex = 0; // Reset diff index for tables
 
                 const headers1 = csvData1.headers;
@@ -1216,8 +1242,10 @@
 
                     if (row1 && !row2) {
                         rowType = 'removed'; // Key exists in file1, not in file2 (e.g., test1 on left, not on right)
+                        detailedCsvChanges.push({ type: 'row_removed', key: key, data: rowData1 });
                     } else if (!row1 && row2) {
                         rowType = 'added'; // Key exists in file2, not in file1 (e.g., Rico)
+                        detailedCsvChanges.push({ type: 'row_added', key: key, data: rowData2 });
                     } else { // Key exists in both (e.g., Angel, test1)
                         let hasCellChanges = false;
                         const currentMaxCols = Math.max(rowData1.length, rowData2.length, headers1.length, headers2.length);
@@ -1231,6 +1259,21 @@
                         }
                         if (hasCellChanges) {
                             rowType = 'changed'; // Mark row as changed if any cells differ
+                            const cellChangeDetails = [];
+                            for (let c = 0; c < currentMaxCols; c++) {
+                                const cell1 = rowData1[c] !== undefined ? rowData1[c] : '';
+                                const cell2 = rowData2[c] !== undefined ? rowData2[c] : '';
+                                if (cell1 !== cell2) {
+                                    cellChangeDetails.push({
+                                        columnIndex: c,
+                                        columnName: (headers1[c] || headers2[c] || `Column ${c + 1}`),
+                                        originalValue: cell1,
+                                        newValue: cell2
+                                    });
+                                }
+                            }
+                            if (cellChangeDetails.length > 0)
+                                detailedCsvChanges.push({ type: 'row_changed', key: key, changes: cellChangeDetails });
                         } else {
                             rowType = 'equal';
                         }
@@ -1622,6 +1665,8 @@
                 fileTextAreas = [];
                 diffPositions = [];
 
+                detailedTextChanges = [];
+                detailedCsvChanges = [];
                 tableFileHeadersContainer.innerHTML = '';
                 csvTablesContainer.innerHTML = '';
                 csvTableElements = [];
@@ -1793,63 +1838,111 @@
 
             // --- Summary/Statistics ---
             function displaySummary() {
-                let report = "File Details:\n";
-                report += "=============\n\n";
+                let report = `Report Generated: ${new Date().toLocaleString()}\n`;
+                // report += "File Details:\n";
+                // report += "=============\n";
 
-                if (files.length === 0) {
-                    report += "No files loaded.\n";
-                    summaryText.textContent = report;
-                    return;
-                }
+                // if (files.length === 0) {
+                //     report += "  No files loaded.\n";
+                //     summaryText.textContent = report;
+                //     return;
+                // }
 
-                files.forEach((file, index) => {
-                    const lines = file.content.split(/\r?\n/);
-                    const lineCount = lines.filter(l => l.trim() !== '' || lines.length === 1).length;
-                    const wordCount = file.content.split(/\s+/).filter(word => word.length > 0).length;
+                // files.forEach((file, index) => {
+                //     const lines = file.content.split(/\r?\n/);
+                //     const lineCount = lines.filter(l => l.trim() !== '' || lines.length === 1).length;
+                //     const wordCount = file.content.split(/\s+/).filter(word => word.length > 0).length;
 
-                    report += `File ${index + 1}: ${file.name}\n`;
-                    report += `  Type: ${file.type}\n`;
-                    report += `  Size: ${new Blob([file.content]).size} bytes\n`;
-                    report += `  Lines: ${lineCount}\n`;
-                    report += `  Words (estimate): ${wordCount}\n\n`;
-                });
+                //     report += `File ${index + 1}: ${file.name}\n`;
+                //     report += `  - Type: ${file.type}\n`;
+                //     report += `  - Size: ${new Blob([file.content]).size} bytes\n`;
+                //     report += `  - Lines: ${lineCount}\n`;
+                //     report += `  - Words (approx.): ${wordCount}\n\n`;
+                // });
 
                 report += "\nComparison Analysis:\n";
                 report += "--------------------\n";
 
                 if (files.length < 2) {
-                    report += "Not enough files to compare for analysis.\n";
+                    report += "  Not enough files to compare for analysis.\n";
                 } else {
+                    report += `Comparing: "${files[0].name}" vs "${files[1].name}"\n`;
                     let statsToUse = null;
                     let mode = "";
                     let comparisonWasAttempted = (fileTextAreas.length > 0 || csvTableElements.length > 0);
+                    let currentDetailedChanges = [];
 
                     if (currentViewTab === 'text-comparison' && (lastTextDiffStats.totalDifferentLines > 0 || lastTextDiffStats.additions > 0 || lastTextDiffStats.removals > 0 || lastTextDiffStats.changes > 0 || comparisonWasAttempted)) {
                         statsToUse = lastTextDiffStats;
                         mode = "Text Comparison";
+                        currentDetailedChanges = detailedTextChanges;
                     } else if (currentViewTab === 'table-comparison' && (lastCsvDiffStats.totalDiffs > 0 || lastCsvDiffStats.additions > 0 || lastCsvDiffStats.removals > 0 || lastCsvDiffStats.changes > 0 || comparisonWasAttempted)) {
                         statsToUse = lastCsvDiffStats;
                         mode = "CSV Table Comparison";
+                        currentDetailedChanges = detailedCsvChanges;
                     }
 
+                    report += `Mode: ${mode || (files.every(f => f.type === 'CSV') ? 'CSV Table Comparison' : 'Text Comparison')}\n\n`;
+                    report += `Summary Statistics:\n`;
+
                     if (statsToUse && (statsToUse.totalDifferentLines > 0 || statsToUse.totalDiffs > 0 || statsToUse.additions > 0 || statsToUse.removals > 0 || statsToUse.changes > 0)) {
-                        report += `Mode: ${mode}\n`;
                         if (mode === "Text Comparison") {
-                            report += `  Lines with differences: ${statsToUse.totalDifferentLines}\n`;
-                            report += `  Added segments: ${statsToUse.additions}\n`;
-                            report += `  Removed segments: ${statsToUse.removals}\n`;
-                            report += `  Modified values (JSON): ${statsToUse.changes}\n`;
+                            report += `  - Lines with differences: ${statsToUse.totalDifferentLines}\n`;
+                            report += `  - Added segments: ${statsToUse.additions}\n`;
+                            report += `  - Removed segments: ${statsToUse.removals}\n`;
+                            report += `  - Modified values (e.g., JSON): ${statsToUse.changes}\n`;
                         } else {
-                            report += `  Total different rows: ${statsToUse.totalDiffs}\n`;
-                            report += `  Rows Added: ${statsToUse.additions}\n`;
-                            report += `  Rows Removed: ${statsToUse.removals}\n`;
-                            report += `  Rows Changed: ${statsToUse.changes}\n`;
+                            report += `  - Total different rows: ${statsToUse.totalDiffs}\n`;
+                            report += `  - Rows Added: ${statsToUse.additions}\n`;
+                            report += `  - Rows Removed: ${statsToUse.removals}\n`;
+                            report += `  - Rows Changed: ${statsToUse.changes}\n`;
                         }
                     } else if (comparisonWasAttempted) {
-                        report += `Mode: ${mode || (files.every(f => f.type === 'CSV') ? 'CSV Table Comparison' : 'Text Comparison')}\n`;
-                        report += "No differences found.\n";
+                        report += "  - No differences found.\n";
                     } else {
-                        report += "Comparison not yet performed.\n";
+                        report += "  - Comparison not yet performed.\n";
+                    }
+
+                    if (currentDetailedChanges.length > 0) {
+                        report += `\nDetailed Changes (Illustrative Examples - up to ${MAX_DETAILED_SUMMARY_ITEMS}):\n`;
+                        report += "-------------------------------------------------\n";
+                        let itemsShown = 0;
+                        for (const item of currentDetailedChanges) {
+                            if (itemsShown >= MAX_DETAILED_SUMMARY_ITEMS) break;
+
+                            if (mode === "Text Comparison") {
+                                if (item.type === 'changed') {
+                                    report += `  - Changed Line ${item.lineNumber} ${item.key ? `(Key: ${truncateText(item.key, 20)})` : ''}:\n`;
+                                    report += `    FROM: "${truncateText(item.original)}"\n`;
+                                    report += `    TO  : "${truncateText(item.modified)}"\n`;
+                                } else if (item.type === 'added') {
+                                    report += `  - Added Line ${item.lineNumber}: "${truncateText(item.value)}"\n`;
+                                } else if (item.type === 'removed') {
+                                    report += `  - Removed Line ${item.lineNumber}: "${truncateText(item.value)}"\n`;
+                                }
+                            } else if (mode === "CSV Table Comparison") {
+                                if (item.type === 'row_changed') {
+                                    report += `  - Row Changed (Key: "${truncateText(item.key)}"):\n`;
+                                    item.changes.slice(0, 3).forEach(change => { // Show first 3 cell changes per row
+                                        report += `    - ${truncateText(change.columnName, 20)}: "${truncateText(change.originalValue)}" -> "${truncateText(change.newValue)}"\n`;
+                                    });
+                                    if (item.changes.length > 3) report += `      ... and ${item.changes.length - 3} more cell changes.\n`;
+                                } else if (item.type === 'row_added') {
+                                    report += `  - Row Added (Key: "${truncateText(item.key)}"): Data: [${item.data.slice(0, 3).map(d => truncateText(d, 15)).join(', ')}...]\n`;
+                                } else if (item.type === 'row_removed') {
+                                    report += `  - Row Removed (Key: "${truncateText(item.key)}"): Data: [${item.data.slice(0, 3).map(d => truncateText(d, 15)).join(', ')}...]\n`;
+                                }
+                            }
+                            itemsShown++;
+                            report += "\n"; // Add a blank line between detailed items
+                        }
+                        if (currentDetailedChanges.length > MAX_DETAILED_SUMMARY_ITEMS) {
+                            report += `  ... and ${currentDetailedChanges.length - MAX_DETAILED_SUMMARY_ITEMS} more changes not listed.\n`;
+                        }
+                    } else if (comparisonWasAttempted && (!statsToUse || (statsToUse.totalDifferentLines === 0 && statsToUse.totalDiffs === 0))) {
+                        // This case is covered by "No differences found" above.
+                    } else if (comparisonWasAttempted) {
+                        report += "\n  No specific line/cell changes to detail beyond summary counts.\n";
                     }
                 }
                 summaryText.textContent = report;
